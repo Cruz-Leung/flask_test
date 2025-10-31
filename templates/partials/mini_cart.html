@@ -1,0 +1,27 @@
+<div class="mini-cart-header d-flex justify-content-between align-items-center">
+  <strong>Cart ({{ count }})</strong>
+  <button type="button" class="btn-close" aria-label="Close" onclick="MiniCart.hide()"></button>
+</div>
+<div class="mini-cart-body mt-2">
+  {% if cart %}
+    <ul class="list-unstyled mb-2" style="max-height: 260px; overflow-y: auto;">
+      {% for pid, item in cart.items() %}
+        <li class="d-flex align-items-center py-2 border-bottom">
+          {% if item.image %}
+            <img src="{{ url_for('static', filename='img/' + item.image) }}" alt="" style="width:42px;height:42px;object-fit:cover" class="me-2 rounded">
+          {% endif %}
+          <div class="flex-grow-1">
+            <div class="small fw-semibold">{{ item.name }}</div>
+            <div class="small text-muted">x{{ item.quantity }} · ${{ '%.2f'|format(item.price) }}</div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="d-flex justify-content-between fw-semibold">
+      <span>Total</span>
+      <span>${{ '%.2f'|format(total) }}</span>
+    </div>
+  {% else %}
+    <div class="text-muted small">Your cart is empty.</div>
+  {% endif %}
+</div>

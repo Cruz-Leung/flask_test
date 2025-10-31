@@ -6,11 +6,12 @@ from flask import (
     url_for, 
     request, 
     redirect, 
-    flash, 
-    get_flashed_messages
+    flash,
 )
 from werkzeug.utils import secure_filename
 from pathlib import Path
+from flask import jsonify, session
+
 
 app = Flask(__name__)
 
@@ -286,6 +287,161 @@ def manage_product():
 
     return render_template('edit_product.html', product=product, action=action)
 
+# Helpers for products and cart
+def get_product_by_id(product_id):
+    conn = get_db_connection()
+    row = conn.execute("SELECT id, name, price, image FROM products WHERE id = ?", (product_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_cart():
+    return session.get('cart', {})
+
+def set_cart(cart):
+    session['cart'] = cart
+
+def cart_totals(cart):
+    total = sum(item['price'] * item['quantity'] for item in cart.values())
+    count = sum(item['quantity'] for item in cart.values())
+    return total, count
+
+# Replace the broken add_to_cart (was using SQLAlchemy 'Product')
+@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    product = get_product_by_id(product_id)
+    if not product:
+        return jsonify({'error': 'Product not found'}), 404
+
+    cart = get_cart()
+    key = str(product_id)
+    if key in cart:
+        cart[key]['quantity'] += 1
+    else:
+        cart[key] = {
+            'id': product['id'],
+            'name': product['name'],
+            'price': float(product['price']),
+            'image': product.get('image'),
+            'quantity': 1
+        }
+    set_cart(cart)
+    total, count = cart_totals(cart)
+    return jsonify({'message': 'Added to cart', 'cart_count': count, 'cart_total': total})
+
+# Optional alias to support /cart/add/<id> if your JS uses it
+@app.route('/cart/add/<int:product_id>', methods=['POST'])
+def cart_add_alias(product_id):
+    return add_to_cart(product_id)
+
+@app.route('/cart')
+def view_cart():
+    cart = get_cart()
+    total, count = cart_totals(cart)
+    return render_template('cart.html', cart=cart, total=total, count=count)
+
+@app.route('/cart/update/<int:product_id>', methods=['POST'])
+def update_cart(product_id):
+    cart = get_cart()
+    key = str(product_id)
+    qty = int(request.form.get('quantity', 0))
+    if key in cart:
+        if qty > 0:
+            cart[key]['quantity'] = qty
+        else:
+            cart.pop(key)
+        set_cart(cart)
+    return redirect(url_for('view_cart'))
+
+@app.route('/cart/clear', methods=['POST'])
+def clear_cart():
+    session['cart'] = {}
+    return redirect(url_for('view_cart'))
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    cart = get_cart()
+    if not cart:
+        flash('Your cart is empty.', 'warning')
+        return redirect(url_for('view_cart'))
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+
+        if not name or not email or not address:
+            flash('Name, email and address are required.', 'danger')
+            return redirect(url_for('checkout'))
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # get or create customer by email
+        cur.execute("SELECT id FROM customers WHERE email = ?", (email,))
+        row = cur.fetchone()
+        if row:
+            customer_id = row['id']
+            cur.execute("UPDATE customers SET name = ?, phone = ?, address = ? WHERE id = ?", (name, phone, address, customer_id))
+        else:
+            cur.execute("INSERT INTO customers (name, email, phone, address) VALUES (?, ?, ?, ?)", (name, email, phone, address))
+            customer_id = cur.lastrowid
+
+        # create order
+        total, _ = cart_totals(cart)
+        cur.execute("INSERT INTO orders (customer_id, status, total) VALUES (?, ?, ?)", (customer_id, 'pending', total))
+        order_id = cur.lastrowid
+
+        # add order_items and decrement stock
+        for item in cart.values():
+            product_id = item['id']
+            qty = item['quantity']
+            unit_price = item['price']
+            cur.execute("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
+                        (order_id, product_id, qty, unit_price))
+            # decrement stock if present
+            cur.execute("""
+                UPDATE products
+                SET stock = CASE WHEN stock IS NOT NULL THEN MAX(stock - ?, 0) ELSE stock END
+                WHERE id = ?
+            """, (qty, product_id))
+
+        conn.commit()
+        conn.close()
+
+        # clear cart
+        session['cart'] = {}
+        return redirect(url_for('order_success', order_id=order_id))
+
+    total, count = cart_totals(cart)
+    return render_template('checkout.html', cart=cart, total=total, count=count)
+
+@app.route('/order/<int:order_id>')
+def order_success(order_id):
+    conn = get_db_connection()
+    order = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    items = conn.execute("""
+        SELECT p.name, oi.quantity, oi.unit_price, p.image
+        FROM order_items oi
+        JOIN products p ON p.id = oi.product_id
+        WHERE oi.order_id = ?
+    """, (order_id,)).fetchall()
+    conn.close()
+    if not order:
+        flash('Order not found.', 'danger')
+        return redirect(url_for('index'))
+    return render_template('order_success.html', order=order, items=items)
+
+@app.route('/cart/mini')
+def cart_mini():
+    cart = get_cart()
+    total, count = cart_totals(cart)
+    return render_template('partials/mini_cart.html', cart=cart, total=total, count=count)
+
+@app.route('/cart/count')
+def cart_count():
+    cart = get_cart()
+    _, count = cart_totals(cart)
+    return jsonify({'count': count})
 
 if __name__ == '__main__':
     app.debug = True
