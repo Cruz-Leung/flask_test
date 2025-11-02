@@ -143,37 +143,72 @@
             <!-- EDIT PRODUCTS TAB -->
             {% if action == 'edit' %}
                 <div class="row">
-                    <!-- Product List -->
+                    <!-- Product List with Search & Filter -->
                     <div class="col-md-4 mb-4">
                         <div class="card">
                             <div class="card-header bg-dark text-white">
                                 <h5 class="mb-0">Select Product</h5>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="list-group list-group-flush" style="max-height: 600px; overflow-y: auto;">
+                            <div class="card-body p-3">
+                                <!-- Search Form -->
+                                <form method="get" action="{{ url_for('manage_product') }}" class="mb-3">
+                                    <input type="hidden" name="action" value="edit">
+                                    <div class="input-group mb-2">
+                                        <input type="text" 
+                                               class="form-control form-control-sm" 
+                                               name="search" 
+                                               placeholder="Search SKU or name..." 
+                                               value="{{ search }}">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                            🔍
+                                        </button>
+                                        {% if search %}
+                                            <a href="{{ url_for('manage_product', action='edit', category=category_filter) }}" 
+                                               class="btn btn-sm btn-outline-danger">✕</a>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Category Filter -->
+                                    <select class="form-select form-select-sm" 
+                                            name="category" 
+                                            onchange="this.form.submit()">
+                                        <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                                        <option value="machines" {% if category_filter == 'machines' %}selected{% endif %}>Machines</option>
+                                        <option value="beans" {% if category_filter == 'beans' %}selected{% endif %}>Beans</option>
+                                        <option value="accessories" {% if category_filter == 'accessories' %}selected{% endif %}>Accessories</option>
+                                    </select>
+                                </form>
+
+                                <!-- Product List -->
+                                <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
                                     {% if products %}
                                         {% for p in products %}
-                                        <a href="{{ url_for('manage_product', action='edit', sku=p.sku) }}" 
-                                           class="list-group-item list-group-item-action {% if product and product.sku == p.sku %}active{% endif %}">
+                                        <a href="{{ url_for('manage_product', action='edit', sku=p.sku, search=search, category=category_filter) }}" 
+                                           class="list-group-item list-group-item-action {% if product and product.sku == p.sku %}active{% endif %} p-2">
                                             <div class="d-flex align-items-center">
                                                 {% if p.image %}
                                                     <img src="{{ url_for('static', filename='img/' + p.image) }}" 
                                                          alt="{{ p.name }}" 
-                                                         style="width: 50px; height: 50px; object-fit: cover;" 
-                                                         class="me-3 rounded">
+                                                         style="width: 45px; height: 45px; object-fit: cover;" 
+                                                         class="me-2 rounded">
                                                 {% else %}
-                                                    <div class="bg-secondary me-3 rounded" style="width: 50px; height: 50px;"></div>
+                                                    <div class="bg-secondary me-2 rounded" style="width: 45px; height: 45px;"></div>
                                                 {% endif %}
-                                                <div>
-                                                    <h6 class="mb-0">{{ p.name }}</h6>
+                                                <div class="flex-grow-1" style="min-width: 0;">
+                                                    <h6 class="mb-0 small text-truncate">{{ p.name }}</h6>
                                                     <small class="text-muted">{{ p.sku }} - ${{ '%.2f'|format(p.price) }}</small>
+                                                    <br><span class="badge bg-secondary" style="font-size: 0.65rem;">{{ p.category }}</span>
                                                 </div>
                                             </div>
                                         </a>
                                         {% endfor %}
                                     {% else %}
                                         <div class="p-3 text-center text-muted">
-                                            No products found
+                                            {% if search or category_filter != 'all' %}
+                                                No products match your filters
+                                            {% else %}
+                                                No products found
+                                            {% endif %}
                                         </div>
                                     {% endif %}
                                 </div>
@@ -189,12 +224,21 @@
                                     <h4 class="mb-4">Edit: {{ product.name }}</h4>
                                     
                                     <form method="post" enctype="multipart/form-data">
-                                        <input type="hidden" name="sku" value="{{ product.sku }}">
+                                        <input type="hidden" name="old_sku" value="{{ product.sku }}">
 
                                         <div class="mb-3">
                                             <label for="sku" class="form-label">SKU</label>
-                                            <input type="text" class="form-control" id="sku" value="{{ product.sku }}" disabled>
-                                            <small class="text-muted">SKU cannot be changed</small>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="sku" 
+                                                   name="sku" 
+                                                   value="{{ product.sku }}" 
+                                                   {% if session.user_role != 'manager' %}readonly{% else %}required{% endif %}>
+                                            {% if session.user_role == 'manager' %}
+                                                <small class="text-warning">⚠️ Manager privilege: SKU can be changed</small>
+                                            {% else %}
+                                                <small class="text-muted">SKU cannot be changed (Manager only)</small>
+                                            {% endif %}
                                         </div>
 
                                         <div class="mb-3">

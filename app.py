@@ -9,11 +9,13 @@ from flask import (
     redirect, 
     flash,
     abort,
+    jsonify,
+    session
 )
 from werkzeug.utils import secure_filename
 from pathlib import Path
-from flask import jsonify, session
 from functools import wraps
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -22,7 +24,16 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key_here_change_in_production'
 
 STATIC_IMG_DIR = Path(__file__).parent / "static" / "img"
+STATIC_DIR = Path(__file__).parent / 'static'
+STATIC_JS_DIR = STATIC_DIR / 'js'
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "avif"} 
+
+# Verify static folder exists
+STATIC_JS_DIR.mkdir(parents=True, exist_ok=True)
+
+print(f"Static folder: {STATIC_DIR}")
+print(f"JS folder: {STATIC_JS_DIR}")
+print(f"cart.js exists: {(STATIC_JS_DIR / 'cart.js').exists()}")
 
 def get_db_connection():
     conn = sqlite3.connect('store.db')
@@ -128,6 +139,8 @@ def about():
 def manage_product():
     action = request.args.get('action', 'edit')
     sku = request.args.get('sku') or request.form.get('sku')
+    search = request.args.get('search', '').strip()
+    category_filter = request.args.get('category', 'all')
     conn = get_db_connection()
 
     # ADD PRODUCT
@@ -164,17 +177,22 @@ def manage_product():
 
     # EDIT PRODUCT
     elif request.method == 'POST' and action == 'edit':
+        old_sku = request.form.get('old_sku')  # Hidden field with original SKU
+        new_sku = request.form.get('sku')
         name = request.form.get('name')
         price = request.form.get('price')
         description = request.form.get('description')
         stock = request.form.get('stock')
+
+        # Check if SKU is being changed (managers only)
+        sku_changed = old_sku != new_sku and session.get('user_role') == 'manager'
 
         image = request.files.get('image')
         image_filename = None
         if image and image.filename:
             if allowed_file(image.filename):
                 ext = image.filename.rsplit('.', 1)[1].lower()
-                image_filename = f"{sku}.{ext}"
+                image_filename = f"{new_sku}.{ext}"
                 STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
                 image.save(STATIC_IMG_DIR / image_filename)
             else:
@@ -183,30 +201,56 @@ def manage_product():
                 return redirect(request.url)
 
         try:
+            if sku_changed:
+                # Check if new SKU already exists
+                existing = conn.execute("SELECT id FROM products WHERE sku = ?", (new_sku,)).fetchone()
+                if existing:
+                    flash("⚠️ A product with this SKU already exists.", "warning")
+                    conn.close()
+                    return redirect(url_for('manage_product', sku=old_sku, action='edit'))
+            
             if image_filename:
                 conn.execute("""
                     UPDATE products
-                    SET name = ?, price = ?, description = ?, stock = ?, image = ?
+                    SET sku = ?, name = ?, price = ?, description = ?, stock = ?, image = ?
                     WHERE sku = ?
-                """, (name, price, description, stock, image_filename, sku))
+                """, (new_sku, name, price, description, stock, image_filename, old_sku))
             else:
                 conn.execute("""
                     UPDATE products
-                    SET name = ?, price = ?, description = ?, stock = ?
+                    SET sku = ?, name = ?, price = ?, description = ?, stock = ?
                     WHERE sku = ?
-                """, (name, price, description, stock, sku))
+                """, (new_sku, name, price, description, stock, old_sku))
             conn.commit()
             flash("✅ Product updated successfully.", "success")
+            
+            # Redirect to the new SKU if it changed
+            sku = new_sku
         except sqlite3.Error as e:
             flash(f"❌ Error updating product: {e}", "danger")
 
         conn.close()
         return redirect(url_for('manage_product', sku=sku, action='edit'))
 
-    # GET product list for edit mode
+    # GET product list for edit mode with filtering
     products = []
     if action == 'edit':
-        products = conn.execute('SELECT * FROM products ORDER BY category, name').fetchall()
+        query = 'SELECT * FROM products WHERE 1=1'
+        params = []
+        
+        # Apply category filter
+        if category_filter != 'all':
+            query += ' AND category = ?'
+            params.append(category_filter)
+        
+        # Apply search filter
+        if search:
+            query += ' AND (sku LIKE ? OR name LIKE ?)'
+            search_term = f'%{search}%'
+            params.extend([search_term, search_term])
+        
+        query += ' ORDER BY category, name'
+        products = conn.execute(query, params).fetchall()
     
     # GET specific product if editing
     product = None
@@ -214,7 +258,12 @@ def manage_product():
         product = conn.execute('SELECT * FROM products WHERE sku = ?', (sku,)).fetchone()
     
     conn.close()
-    return render_template('edit_product.html', product=product, products=products, action=action)
+    return render_template('edit_product.html', 
+                         product=product, 
+                         products=products, 
+                         action=action,
+                         search=search,
+                         category_filter=category_filter)
 
 @app.route("/admin/product/delete/<sku>", methods=['POST'])
 @admin_required
@@ -396,91 +445,141 @@ def product_detail(product_id):
     
     return render_template('product_detail.html', product=product, year=2025)
 
-# Cart helper functions
-def get_product_by_id(product_id):
-    conn = get_db_connection()
-    row = conn.execute("SELECT id, name, price, image FROM products WHERE id = ?", (product_id,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def get_cart():
-    return session.get('cart', {})
-
-def set_cart(cart):
-    session['cart'] = cart
-
-def cart_totals(cart):
-    total = sum(item['price'] * item['quantity'] for item in cart.values())
-    count = sum(item['quantity'] for item in cart.values())
-    return total, count
-
-# Cart routes
-@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
-def add_to_cart(product_id):
-    product = get_product_by_id(product_id)
-    if not product:
-        return jsonify({'error': 'Product not found'}), 404
-
-    cart = get_cart()
-    key = str(product_id)
-    if key in cart:
-        cart[key]['quantity'] += 1
-    else:
-        cart[key] = {
-            'id': product['id'],
-            'name': product['name'],
-            'price': float(product['price']),
-            'image': product.get('image'),
-            'quantity': 1
-        }
-    set_cart(cart)
-    total, count = cart_totals(cart)
-    return jsonify({'message': 'Added to cart', 'cart_count': count, 'cart_total': total})
-
-@app.route('/cart/add/<int:product_id>', methods=['POST'])
-def cart_add_alias(product_id):
-    return add_to_cart(product_id)
-
+# CA    S - Consolidated
 @app.route('/cart')
 def view_cart():
-    cart = get_cart()
-    total, count = cart_totals(cart)
-    return render_template('cart.html', cart=cart, total=total, count=count)
+    """Main cart page"""
+    cart = session.get('cart', {})
+    cart_items = list(cart.values())
+    cart_total = sum(item['price'] * item['quantity'] for item in cart_items)
+    
+    return render_template('view_cart.html', 
+                         cart_items=cart_items, 
+                         cart_total=cart_total,
+                         year=datetime.now().year)
 
-@app.route('/cart/update/<int:product_id>', methods=['POST'])
-def update_cart(product_id):
-    cart = get_cart()
-    key = str(product_id)
-    qty = int(request.form.get('quantity', 0))
-    if key in cart:
-        if qty > 0:
-            cart[key]['quantity'] = qty
+@app.route("/cart/add", methods=['POST'])
+def cart_add():
+    """Add product to cart via AJAX"""
+    data = request.get_json()
+    product_id = data.get('product_id')
+    
+    if not product_id:
+        return jsonify({'success': False, 'message': 'Product ID required'}), 400
+    
+    # Get product from database
+    conn = get_db_connection()
+    product = conn.execute('SELECT * FROM products WHERE id = ?', (product_id,)).fetchone()
+    conn.close()
+    
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+    
+    if product['stock'] <= 0:
+        return jsonify({'success': False, 'message': 'Product out of stock'}), 400
+    
+    # Initialize cart in session if not exists
+    if 'cart' not in session:
+        session['cart'] = {}
+    
+    cart = session['cart']
+    product_id_str = str(product_id)
+    
+    # Add or increment quantity
+    if product_id_str in cart:
+        cart[product_id_str]['quantity'] += 1
+    else:
+        cart[product_id_str] = {
+            'product_id': product['id'],
+            'name': product['name'],
+            'price': float(product['price']),
+            'image': product['image'],
+            'quantity': 1
+        }
+    
+    session['cart'] = cart
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'message': 'Product added to cart',
+        'cart_count': sum(item['quantity'] for item in cart.values())
+    })
+
+@app.route("/cart/update", methods=['POST'])
+def cart_update():
+    """Update cart quantity via AJAX"""
+    data = request.get_json()
+    product_id = str(data.get('product_id'))
+    quantity = data.get('quantity', 1)
+    
+    if 'cart' not in session:
+        return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+    
+    cart = session['cart']
+    
+    if product_id in cart:
+        if quantity <= 0:
+            del cart[product_id]
         else:
-            cart.pop(key)
-        set_cart(cart)
-    return redirect(url_for('view_cart'))
+            cart[product_id]['quantity'] = quantity
+        
+        session['cart'] = cart
+        session.modified = True
+        return jsonify({'success': True, 'message': 'Cart updated'})
+    
+    return jsonify({'success': False, 'message': 'Product not in cart'}), 400
+
+@app.route("/cart/remove", methods=['POST'])
+def cart_remove():
+    """Remove product from cart via AJAX"""
+    data = request.get_json()
+    product_id = str(data.get('product_id'))
+    
+    if 'cart' not in session:
+        return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+    
+    cart = session['cart']
+    
+    if product_id in cart:
+        del cart[product_id]
+        session['cart'] = cart
+        session.modified = True
+        return jsonify({'success': True, 'message': 'Product removed'})
+    
+    return jsonify({'success': False, 'message': 'Product not in cart'}), 400
+
+@app.route("/cart/mini")
+def cart_mini():
+    """API endpoint for mini cart data (AJAX)"""
+    if 'cart' not in session or not session['cart']:
+        return jsonify({
+            'success': True,
+            'cart_items': [],
+            'total': 0.0
+        })
+    
+    cart = session['cart']
+    cart_items = list(cart.values())
+    total = sum(item['price'] * item['quantity'] for item in cart_items)
+    
+    return jsonify({
+        'success': True,
+        'cart_items': cart_items,
+        'total': total
+    })
 
 @app.route('/cart/clear', methods=['POST'])
 def clear_cart():
+    """Clear entire cart"""
     session['cart'] = {}
+    flash('Cart cleared.', 'info')
     return redirect(url_for('view_cart'))
-
-@app.route('/cart/mini')
-def cart_mini():
-    cart = get_cart()
-    total, count = cart_totals(cart)
-    return render_template('partials/mini_cart.html', cart=cart, total=total, count=count)
-
-@app.route('/cart/count')
-def cart_count():
-    cart = get_cart()
-    _, count = cart_totals(cart)
-    return jsonify({'count': count})
 
 # Checkout and orders
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    cart = get_cart()
+    cart = session.get('cart', {})  # Changed from get_cart()
     if not cart:
         flash('Your cart is empty.', 'warning')
         return redirect(url_for('view_cart'))
@@ -515,12 +614,15 @@ def checkout():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        total, _ = cart_totals(cart)
+        
+        # Calculate totals inline instead of using cart_totals()
+        total = sum(item['price'] * item['quantity'] for item in cart.values())
+        
         cur.execute("INSERT INTO orders (customer_id, status, total) VALUES (?, ?, ?)", (customer_id, 'pending', total))
         order_id = cur.lastrowid
 
         for item in cart.values():
-            product_id = item['id']
+            product_id = item['product_id']  # Changed from item['id']
             qty = item['quantity']
             unit_price = item['price']
             cur.execute("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
@@ -543,7 +645,10 @@ def checkout():
         user_data = conn.execute("SELECT * FROM customers WHERE id = ?", (session['user_id'],)).fetchone()
         conn.close()
 
-    total, count = cart_totals(cart)
+    # Calculate totals inline
+    total = sum(item['price'] * item['quantity'] for item in cart.values())
+    count = sum(item['quantity'] for item in cart.values())
+    
     return render_template('checkout.html', cart=cart, total=total, count=count, user=user_data)
 
 @app.route('/order/<int:order_id>')
