@@ -2,6 +2,7 @@ import sqlite3
 import os
 from pathlib import Path
 import argparse
+import hashlib
 
 BASEDIR = Path(__file__).parent
 DB_PATH = BASEDIR / "store.db"
@@ -11,7 +12,8 @@ CREATE_CUSTOMERS = """
 CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    email TEXT UNIQUE,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
     phone TEXT,
     address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -62,6 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_brand ON products(brand);
 CREATE INDEX IF NOT EXISTS idx_products_subcategory ON products(subcategory);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
 """
 
 # Sample products for beans and accessories
@@ -96,6 +99,10 @@ MACHINE_BRANDS = {
     }
 }
 
+def hash_password(password):
+    """Hash a password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -125,14 +132,13 @@ def seed_products(conn):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, product)
     
-    # Then insert machine products with SKU-based image names
+    # Then insert machine products
     for brand, info in MACHINE_BRANDS.items():
         base_price = info["base_price"]
         for i, model in enumerate(info["models"], 1):
             name = f"{brand} {model}"
             sku = f"M-{brand[:3].upper()}{i:03d}"
             price = base_price * (1 + (i % 5) * 0.1)
-            image = f"{sku}.jpg"  # Image name matches SKU
             
             cur.execute("""
                 INSERT OR IGNORE INTO products 
@@ -146,22 +152,24 @@ def seed_products(conn):
                 f"Semi-automatic espresso machine from {brand}",
                 price,
                 5,
-                image,
+                f"machine_{brand.lower()}_{i}.jpg",
                 brand
             ))
     
     conn.commit()
     print("Products seeded successfully")
 
-def seed_sample_customer_and_order(conn):
+def seed_sample_customer(conn):
+    """Create a test customer account"""
     cur = conn.cursor()
+    test_password = hash_password("password123")
     cur.execute("""
-        INSERT OR IGNORE INTO customers (name, email, phone, address) 
-        VALUES (?, ?, ?, ?)
-    """, ("Test Customer", "test@example.com", "0412345678", "123 Coffee St"))
+        INSERT OR IGNORE INTO customers (name, email, password, phone, address) 
+        VALUES (?, ?, ?, ?, ?)
+    """, ("Test Customer", "test@example.com", test_password, "0412345678", "123 Coffee St"))
     
     conn.commit()
-    print("Sample customer seeded successfully")
+    print("Sample customer seeded successfully (email: test@example.com, password: password123)")
 
 def main():
     parser = argparse.ArgumentParser(description="Setup and seed the coffee store database")
@@ -179,7 +187,7 @@ def main():
 
     if args.seed:
         seed_products(conn)
-        seed_sample_customer_and_order(conn)
+        seed_sample_customer(conn)
 
     conn.close()
 

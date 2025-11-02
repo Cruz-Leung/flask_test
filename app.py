@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import hashlib
 from flask import (
     Flask, 
     render_template, 
@@ -11,6 +12,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from flask import jsonify, session
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -28,6 +30,21 @@ def get_db_connection():
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
+
+# Authentication helper functions
+def hash_password(password):
+    """Hash a password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def login_required(f):
+    """Decorator to require login for certain routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route("/")
 def index():
@@ -69,135 +86,6 @@ def accessories():
 @app.route("/about")
 def about():
     return render_template("about.html", year=2025)
-
-# @app.route("/test-products")
-# def test_products():
-#     conn = get_db_connection()
-#     # Get all products with their details
-#     products = conn.execute('''
-#         SELECT id, name, category, description, price, stock, image 
-#         FROM products
-#         ORDER BY category, name
-#     ''').fetchall()
-#     conn.close()
-#     return render_template("test_products.html", year=2025, products=products)
-
-# @app.route("/admin/upload-image", methods=["GET", "POST"])
-# def upload_image():
-#     if request.method == "POST":
-#         file = request.files.get("image")
-#         sku = request.form.get("sku", "").strip()
-#         product_id = request.form.get("product_id", "").strip()
-
-#         if not file or file.filename == "":
-#             flash("No file selected", "danger")
-#             app.logger.warning("Upload attempted with no file")
-#             return redirect(request.url)
-
-#         if not allowed_file(file.filename):
-#             flash("Invalid file type", "danger")
-#             app.logger.warning("Rejected file type: %s", file.filename)
-#             return redirect(request.url)
-
-#         # build stable filename
-#         ext = file.filename.rsplit(".", 1)[1].lower()
-#         if sku:
-#             filename = secure_filename(f"{sku}.{ext}")
-#         elif product_id:
-#             filename = secure_filename(f"product_{product_id}.{ext}")
-#         else:
-#             filename = secure_filename(file.filename)
-
-#         # ensure directory exists
-#         STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
-#         dest = STATIC_IMG_DIR / filename
-
-#         try:
-#             file.save(dest)
-#             app.logger.info("Saved upload to %s", dest)
-#         except Exception as e:
-#             flash("Failed to save file", "danger")
-#             app.logger.exception("Error saving uploaded file: %s", e)
-#             return redirect(request.url)
-
-#         # update DB entry
-#         try:
-#             conn = get_db_connection()
-#             if sku:
-#                 conn.execute("UPDATE products SET image = ? WHERE sku = ?", (filename, sku))
-#             elif product_id:
-#                 conn.execute("UPDATE products SET image = ? WHERE id = ?", (filename, product_id))
-#             conn.commit()
-#             conn.close()
-#             flash(f"Image uploaded as {filename}", "success")
-#             app.logger.info("Updated DB for %s", sku or product_id)
-#         except Exception as e:
-#             flash("Uploaded file but failed to update DB", "warning")
-#             app.logger.exception("DB update failed: %s", e)
-
-#         return redirect(request.url)
-
-#     # GET: show form and any flash messages
-#     messages = get_flashed_messages(with_categories=True)
-#     return render_template("edit_product.html", messages=messages)
-
-# @app.route("/admin/product/edit/<sku>", methods=['GET', 'POST'])
-# def admin_edit_product(sku):
-#     conn = get_db_connection()
-    
-#     if request.method == 'POST':
-#         # Get form data
-#         name = request.form.get('name')
-#         price = request.form.get('price')
-#         description = request.form.get('description')
-#         stock = request.form.get('stock')
-        
-#         # Handle image upload if provided
-#         image = request.files.get('image')
-#         image_filename = None
-#         if image and image.filename:
-#             if allowed_file(image.filename):
-#                 # Create a filename based on SKU
-#                 ext = image.filename.rsplit('.', 1)[1].lower()
-#                 image_filename = f"{sku}.{ext}"
-#                 image_path = STATIC_IMG_DIR / image_filename
-#                 STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
-#                 image.save(image_path)
-#             else:
-#                 flash('Invalid image type', 'error')
-#                 return redirect(request.url)
-
-#         # Update database
-#         try:
-#             if image_filename:
-#                 conn.execute("""
-#                     UPDATE products 
-#                     SET name = ?, price = ?, description = ?, stock = ?, image = ?
-#                     WHERE sku = ?
-#                 """, (name, price, description, stock, image_filename, sku))
-#             else:
-#                 conn.execute("""
-#                     UPDATE products 
-#                     SET name = ?, price = ?, description = ?, stock = ?
-#                     WHERE sku = ?
-#                 """, (name, price, description, stock, sku))
-            
-#             conn.commit()
-#             flash('Product updated successfully', 'success')
-#         except sqlite3.Error as e:
-#             flash(f'Error updating product: {e}', 'error')
-        
-#         return redirect(url_for('admin_products'))
-
-#     # GET request - show edit form
-#     product = conn.execute('SELECT * FROM products WHERE sku = ?', (sku,)).fetchone()
-#     conn.close()
-    
-#     if product is None:
-#         flash('Product not found', 'error')
-#         return redirect(url_for('admin_products'))
-        
-#     return render_template('admin/edit_product.html', product=product)
 
 @app.route("/admin/product", methods=['GET', 'POST'])
 def manage_product():
@@ -287,10 +175,30 @@ def manage_product():
 
     return render_template('edit_product.html', product=product, action=action)
 
+@app.route("/product/<int:product_id>")
+def product_detail(product_id):
+    conn = get_db_connection()
+    product = conn.execute('''
+        SELECT * FROM products WHERE id = ?
+    ''', (product_id,)).fetchone()
+    conn.close()
+    
+    if product is None:
+        flash('Product not found', 'danger')
+        return redirect(url_for('index'))
+    
+    return render_template('product_detail.html', product=product, year=2025)
+
 # Helpers for products and cart
 def get_product_by_id(product_id):
     conn = get_db_connection()
     row = conn.execute("SELECT id, name, price, image FROM products WHERE id = ?", (product_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_product_by_sku(sku):
+    conn = get_db_connection()
+    row = conn.execute("SELECT id, name, price, image FROM products WHERE sku = ?", (sku,)).fetchone()
     conn.close()
     return dict(row) if row else None
 
@@ -305,7 +213,7 @@ def cart_totals(cart):
     count = sum(item['quantity'] for item in cart.values())
     return total, count
 
-# Replace the broken add_to_cart (was using SQLAlchemy 'Product')
+# Cart routes
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
     product = get_product_by_id(product_id)
@@ -328,7 +236,6 @@ def add_to_cart(product_id):
     total, count = cart_totals(cart)
     return jsonify({'message': 'Added to cart', 'cart_count': count, 'cart_total': total})
 
-# Optional alias to support /cart/add/<id> if your JS uses it
 @app.route('/cart/add/<int:product_id>', methods=['POST'])
 def cart_add_alias(product_id):
     return add_to_cart(product_id)
@@ -357,6 +264,19 @@ def clear_cart():
     session['cart'] = {}
     return redirect(url_for('view_cart'))
 
+@app.route('/cart/mini')
+def cart_mini():
+    cart = get_cart()
+    total, count = cart_totals(cart)
+    return render_template('partials/mini_cart.html', cart=cart, total=total, count=count)
+
+@app.route('/cart/count')
+def cart_count():
+    cart = get_cart()
+    _, count = cart_totals(cart)
+    return jsonify({'count': count})
+
+# Checkout and orders (SINGLE DEFINITION)
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     cart = get_cart()
@@ -365,28 +285,39 @@ def checkout():
         return redirect(url_for('view_cart'))
 
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
-        address = request.form.get('address', '').strip()
+        # If user is logged in, use their ID, otherwise create/find customer
+        if 'user_id' in session:
+            customer_id = session['user_id']
+        else:
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()
+            address = request.form.get('address', '').strip()
 
-        if not name or not email or not address:
-            flash('Name, email and address are required.', 'danger')
-            return redirect(url_for('checkout'))
+            if not name or not email or not address:
+                flash('Name, email and address are required.', 'danger')
+                return redirect(url_for('checkout'))
 
+            conn = get_db_connection()
+            cur = conn.cursor()
+            # get or create customer by email
+            cur.execute("SELECT id FROM customers WHERE email = ?", (email,))
+            row = cur.fetchone()
+            if row:
+                customer_id = row['id']
+                cur.execute("UPDATE customers SET name = ?, phone = ?, address = ? WHERE id = ?", (name, phone, address, customer_id))
+            else:
+                # Create temporary password for guest checkout
+                temp_password = hash_password(email + "temp")
+                cur.execute("INSERT INTO customers (name, email, password, phone, address) VALUES (?, ?, ?, ?, ?)", 
+                           (name, email, temp_password, phone, address))
+                customer_id = cur.lastrowid
+            conn.commit()
+            conn.close()
+
+        # Create order
         conn = get_db_connection()
         cur = conn.cursor()
-        # get or create customer by email
-        cur.execute("SELECT id FROM customers WHERE email = ?", (email,))
-        row = cur.fetchone()
-        if row:
-            customer_id = row['id']
-            cur.execute("UPDATE customers SET name = ?, phone = ?, address = ? WHERE id = ?", (name, phone, address, customer_id))
-        else:
-            cur.execute("INSERT INTO customers (name, email, phone, address) VALUES (?, ?, ?, ?)", (name, email, phone, address))
-            customer_id = cur.lastrowid
-
-        # create order
         total, _ = cart_totals(cart)
         cur.execute("INSERT INTO orders (customer_id, status, total) VALUES (?, ?, ?)", (customer_id, 'pending', total))
         order_id = cur.lastrowid
@@ -398,7 +329,6 @@ def checkout():
             unit_price = item['price']
             cur.execute("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
                         (order_id, product_id, qty, unit_price))
-            # decrement stock if present
             cur.execute("""
                 UPDATE products
                 SET stock = CASE WHEN stock IS NOT NULL THEN MAX(stock - ?, 0) ELSE stock END
@@ -412,8 +342,15 @@ def checkout():
         session['cart'] = {}
         return redirect(url_for('order_success', order_id=order_id))
 
+    # Pre-fill form if user is logged in
+    user_data = None
+    if 'user_id' in session:
+        conn = get_db_connection()
+        user_data = conn.execute("SELECT * FROM customers WHERE id = ?", (session['user_id'],)).fetchone()
+        conn.close()
+
     total, count = cart_totals(cart)
-    return render_template('checkout.html', cart=cart, total=total, count=count)
+    return render_template('checkout.html', cart=cart, total=total, count=count, user=user_data)
 
 @app.route('/order/<int:order_id>')
 def order_success(order_id):
@@ -431,17 +368,141 @@ def order_success(order_id):
         return redirect(url_for('index'))
     return render_template('order_success.html', order=order, items=items)
 
-@app.route('/cart/mini')
-def cart_mini():
-    cart = get_cart()
-    total, count = cart_totals(cart)
-    return render_template('partials/mini_cart.html', cart=cart, total=total, count=count)
+# Authentication routes
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
 
-@app.route('/cart/count')
-def cart_count():
-    cart = get_cart()
-    _, count = cart_totals(cart)
-    return jsonify({'count': count})
+        # Validation
+        if not name or not email or not password:
+            flash('Name, email, and password are required.', 'danger')
+            return redirect(url_for('register'))
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect(url_for('register'))
+
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'danger')
+            return redirect(url_for('register'))
+
+        # Hash password and create account
+        hashed_password = hash_password(password)
+        
+        conn = get_db_connection()
+        try:
+            conn.execute("""
+                INSERT INTO customers (name, email, password, phone, address)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, email, hashed_password, phone, address))
+            conn.commit()
+            flash('Account created successfully! Please log in.', 'success')
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            flash('An account with this email already exists.', 'danger')
+        except Exception as e:
+            flash(f'Error creating account: {e}', 'danger')
+        finally:
+            conn.close()
+
+        return redirect(url_for('register'))
+
+    return render_template('register.html', year=2025)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            flash('Email and password are required.', 'danger')
+            return redirect(url_for('login'))
+
+        hashed_password = hash_password(password)
+        
+        conn = get_db_connection()
+        user = conn.execute("""
+            SELECT id, name, email FROM customers 
+            WHERE email = ? AND password = ?
+        """, (email, hashed_password)).fetchone()
+        conn.close()
+
+        if user:
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            session['user_email'] = user['email']
+            flash(f'Welcome back, {user["name"]}!', 'success')
+            
+            # Redirect to 'next' page if it exists, otherwise to index
+            next_page = request.args.get('next')
+            return redirect(next_page if next_page else url_for('index'))
+        else:
+            flash('Invalid email or password.', 'danger')
+
+    return render_template('login.html', year=2025)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('index'))
+
+@app.route("/account")
+@login_required
+def account():
+    conn = get_db_connection()
+    user = conn.execute("""
+        SELECT * FROM customers WHERE id = ?
+    """, (session['user_id'],)).fetchone()
+    
+    orders = conn.execute("""
+        SELECT * FROM orders 
+        WHERE customer_id = ? 
+        ORDER BY created_at DESC
+    """, (session['user_id'],)).fetchall()
+    
+    conn.close()
+    return render_template('account.html', user=user, orders=orders, year=2025)
+
+@app.route("/account/edit", methods=['GET', 'POST'])
+@login_required
+def edit_account():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        
+        conn = get_db_connection()
+        try:
+            conn.execute("""
+                UPDATE customers 
+                SET name = ?, phone = ?, address = ?
+                WHERE id = ?
+            """, (name, phone, address, session['user_id']))
+            conn.commit()
+            session['user_name'] = name
+            flash('Account updated successfully!', 'success')
+        except Exception as e:
+            flash(f'Error updating account: {e}', 'danger')
+        finally:
+            conn.close()
+        
+        return redirect(url_for('account'))
+
+    conn = get_db_connection()
+    user = conn.execute("""
+        SELECT * FROM customers WHERE id = ?
+    """, (session['user_id'],)).fetchone()
+    conn.close()
+    
+    return render_template('edit_account.html', user=user, year=2025)
 
 if __name__ == '__main__':
     app.debug = True
