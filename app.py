@@ -155,6 +155,7 @@ def manage_product():
             """, (sku, name, category, subcategory, price, stock, description, image_filename))
             conn.commit()
             flash("✅ New product added successfully!", "success")
+            conn.close()
             return redirect(url_for('manage_product', action='add'))
         except sqlite3.IntegrityError:
             flash("⚠️ Product with this SKU already exists.", "warning")
@@ -195,19 +196,25 @@ def manage_product():
                     WHERE sku = ?
                 """, (name, price, description, stock, sku))
             conn.commit()
-            flash("Product updated successfully.", "success")
+            flash("✅ Product updated successfully.", "success")
         except sqlite3.Error as e:
-            flash(f"Error updating product: {e}", "danger")
+            flash(f"❌ Error updating product: {e}", "danger")
 
         conn.close()
         return redirect(url_for('manage_product', sku=sku, action='edit'))
 
+    # GET product list for edit mode
+    products = []
+    if action == 'edit':
+        products = conn.execute('SELECT * FROM products ORDER BY category, name').fetchall()
+    
+    # GET specific product if editing
     product = None
     if sku and action == 'edit':
         product = conn.execute('SELECT * FROM products WHERE sku = ?', (sku,)).fetchone()
+    
     conn.close()
-
-    return render_template('edit_product.html', product=product, action=action)
+    return render_template('edit_product.html', product=product, products=products, action=action)
 
 @app.route("/admin/product/delete/<sku>", methods=['POST'])
 @admin_required

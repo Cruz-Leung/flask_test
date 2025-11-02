@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>{% if action == 'add' %}Add Product{% else %}Edit Product{% endif %} - Cruzy Coffee Co.</title>
+    <title>Product Management - Cruzy Coffee Co.</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
@@ -20,7 +20,6 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navmenu">
-                <!-- Main navigation links (centered) -->
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item px-3">
                         <a class="nav-link" href="{{ url_for('index') }}">Home</a>
@@ -46,9 +45,7 @@
                     </li>
                 </ul>
 
-                <!-- Right-aligned: Role-based menu + Account + Cart -->
                 <ul class="navbar-nav ms-auto">
-                    <!-- Role-based admin/manager menu -->
                     {% if session.user_role in ['admin', 'manager'] %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
@@ -65,7 +62,6 @@
                         </li>
                     {% endif %}
 
-                    <!-- Account dropdown -->
                     {% if session.user_id %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
@@ -86,7 +82,6 @@
                         </li>
                     {% endif %}
 
-                    <!-- Cart dropdown with icon -->
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
@@ -114,136 +109,224 @@
     </nav>
 
     <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-body p-5">
-                        <h2 class="mb-4">
-                            {% if action == 'add' %}
-                                Add New Product
-                            {% else %}
-                                Edit Product
-                            {% endif %}
-                        </h2>
+        <h2 class="mb-4">Product Management</h2>
 
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ category }} alert-dismissible fade show">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-                        {% if action == 'edit' and not product %}
-                            <div class="alert alert-warning">
-                                <p>Please provide a product SKU in the URL to edit a product.</p>
-                                <p>Example: <code>/admin/product?action=edit&sku=B-HOUSE-001</code></p>
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action == 'edit' %}active{% endif %}" 
+                   href="{{ url_for('manage_product', action='edit') }}">
+                    Edit Products
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action == 'add' %}active{% endif %}" 
+                   href="{{ url_for('manage_product', action='add') }}">
+                    Add Product
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- EDIT PRODUCTS TAB -->
+            {% if action == 'edit' %}
+                <div class="row">
+                    <!-- Product List -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">Select Product</h5>
                             </div>
-                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
-                        {% else %}
-                            <form method="post" enctype="multipart/form-data">
-                                {% if action == 'edit' %}
-                                    <input type="hidden" name="sku" value="{{ product.sku }}">
-                                {% endif %}
-
-                                <div class="mb-3">
-                                    <label for="sku" class="form-label">SKU</label>
-                                    <input type="text" class="form-control" id="sku" name="sku" 
-                                           value="{{ product.sku if product else '' }}" 
-                                           {% if action == 'edit' %}readonly{% else %}required{% endif %}>
-                                    {% if action == 'edit' %}
-                                        <small class="text-muted">SKU cannot be changed</small>
-                                    {% endif %}
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Product Name</label>
-                                    <input type="text" class="form-control" id="name" name="name" 
-                                           value="{{ product.name if product else '' }}" required>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="category" class="form-label">Category</label>
-                                        <select class="form-select" id="category" name="category" required>
-                                            <option value="">Select category...</option>
-                                            <option value="machines" {% if product and product.category == 'machines' %}selected{% endif %}>Machines</option>
-                                            <option value="beans" {% if product and product.category == 'beans' %}selected{% endif %}>Beans</option>
-                                            <option value="accessories" {% if product and product.category == 'accessories' %}selected{% endif %}>Accessories</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="subcategory" class="form-label">Subcategory (optional)</label>
-                                        <input type="text" class="form-control" id="subcategory" name="subcategory" 
-                                               value="{{ product.subcategory if product else '' }}" 
-                                               placeholder="e.g., semi-auto, pod">
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="price" class="form-label">Price ($)</label>
-                                        <input type="number" step="0.01" class="form-control" id="price" name="price" 
-                                               value="{{ product.price if product else '' }}" required>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="stock" class="form-label">Stock</label>
-                                        <input type="number" class="form-control" id="stock" name="stock" 
-                                               value="{{ product.stock if product else '0' }}" required>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" rows="4">{{ product.description if product else '' }}</textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="image" class="form-label">Product Image</label>
-                                    {% if product and product.image %}
-                                        <div class="mb-2">
-                                            <img src="{{ url_for('static', filename='img/' + product.image) }}" 
-                                                 alt="{{ product.name }}" 
-                                                 style="max-width: 200px; height: auto;" 
-                                                 class="img-thumbnail">
-                                            <p class="small text-muted mt-1">Current image: {{ product.image }}</p>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" style="max-height: 600px; overflow-y: auto;">
+                                    {% if products %}
+                                        {% for p in products %}
+                                        <a href="{{ url_for('manage_product', action='edit', sku=p.sku) }}" 
+                                           class="list-group-item list-group-item-action {% if product and product.sku == p.sku %}active{% endif %}">
+                                            <div class="d-flex align-items-center">
+                                                {% if p.image %}
+                                                    <img src="{{ url_for('static', filename='img/' + p.image) }}" 
+                                                         alt="{{ p.name }}" 
+                                                         style="width: 50px; height: 50px; object-fit: cover;" 
+                                                         class="me-3 rounded">
+                                                {% else %}
+                                                    <div class="bg-secondary me-3 rounded" style="width: 50px; height: 50px;"></div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ p.name }}</h6>
+                                                    <small class="text-muted">{{ p.sku }} - ${{ '%.2f'|format(p.price) }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="p-3 text-center text-muted">
+                                            No products found
                                         </div>
                                     {% endif %}
-                                    <input type="file" class="form-control" id="image" name="image" 
-                                           accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif">
-                                    <small class="text-muted">Allowed: PNG, JPG, JPEG, WEBP, GIF, AVIF</small>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-dark">
-                                        {% if action == 'add' %}Add Product{% else %}Save Changes{% endif %}
-                                    </button>
+                    <!-- Edit Form -->
+                    <div class="col-md-8">
+                        {% if product %}
+                            <div class="card shadow">
+                                <div class="card-body p-4">
+                                    <h4 class="mb-4">Edit: {{ product.name }}</h4>
                                     
-                                    {% if action == 'edit' and product %}
-                                        <button type="button" class="btn btn-danger" 
-                                                onclick="if(confirm('Are you sure you want to delete this product? This action cannot be undone.')) { document.getElementById('deleteForm').submit(); }">
-                                            Delete Product
-                                        </button>
-                                    {% endif %}
-                                    
-                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
+                                    <form method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="sku" value="{{ product.sku }}">
+
+                                        <div class="mb-3">
+                                            <label for="sku" class="form-label">SKU</label>
+                                            <input type="text" class="form-control" id="sku" value="{{ product.sku }}" disabled>
+                                            <small class="text-muted">SKU cannot be changed</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="name" class="form-label">Product Name</label>
+                                            <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="price" class="form-label">Price ($)</label>
+                                                <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ product.price }}" required>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label for="stock" class="form-label">Stock</label>
+                                                <input type="number" class="form-control" id="stock" name="stock" value="{{ product.stock }}" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" name="description" rows="4">{{ product.description }}</textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="image" class="form-label">Product Image</label>
+                                            {% if product.image %}
+                                                <div class="mb-2">
+                                                    <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                                                         alt="{{ product.name }}" 
+                                                         style="max-width: 200px; height: auto;" 
+                                                         class="img-thumbnail">
+                                                    <p class="small text-muted mt-1">Current: {{ product.image }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <input type="file" class="form-control" id="image" name="image" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif">
+                                            <small class="text-muted">Leave blank to keep current image</small>
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-dark">Save Changes</button>
+                                            <button type="button" class="btn btn-danger" 
+                                                    onclick="if(confirm('Are you sure you want to delete this product? This action cannot be undone.')) { document.getElementById('deleteForm').submit(); }">
+                                                Delete Product
+                                            </button>
+                                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
+                                        </div>
+                                    </form>
+
+                                    <!-- Hidden delete form -->
+                                    <form id="deleteForm" action="{{ url_for('delete_product', sku=product.sku) }}" method="post" style="display: none;"></form>
                                 </div>
-                            </form>
-
-                            {% if action == 'edit' and product %}
-                                <!-- Hidden delete form -->
-                                <form id="deleteForm" action="{{ url_for('delete_product', sku=product.sku) }}" method="post" style="display: none;">
-                                </form>
-                            {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="card shadow">
+                                <div class="card-body p-5 text-center">
+                                    <p class="lead text-muted">← Select a product from the list to edit</p>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
+
+            <!-- ADD PRODUCT TAB -->
+            {% else %}
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow">
+                            <div class="card-body p-4">
+                                <h4 class="mb-4">Add New Product</h4>
+                                
+                                <form method="post" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="sku" class="form-label">SKU</label>
+                                        <input type="text" class="form-control" id="sku" name="sku" required placeholder="e.g., B-HOUSE-001">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Product Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="category" class="form-label">Category</label>
+                                            <select class="form-select" id="category" name="category" required>
+                                                <option value="">Select category...</option>
+                                                <option value="machines">Machines</option>
+                                                <option value="beans">Beans</option>
+                                                <option value="accessories">Accessories</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="subcategory" class="form-label">Subcategory (optional)</label>
+                                            <input type="text" class="form-control" id="subcategory" name="subcategory" placeholder="e.g., semi-auto, pod">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="price" class="form-label">Price ($)</label>
+                                            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="stock" class="form-label">Stock</label>
+                                            <input type="number" class="form-control" id="stock" name="stock" value="0" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="image" class="form-label">Product Image</label>
+                                        <input type="file" class="form-control" id="image" name="image" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif">
+                                        <small class="text-muted">Allowed: PNG, JPG, JPEG, WEBP, GIF, AVIF</small>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-dark">Add Product</button>
+                                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 
