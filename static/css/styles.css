@@ -196,11 +196,6 @@ body.site-bg {
     transform: translateX(5px);
 }
 
-/* Smooth scroll behavior */
-html {
-    scroll-behavior: smooth;
-}
-
 /* ================== CART STYLING ================== */
 .cart-container {
   position: relative;
@@ -321,4 +316,59 @@ html {
 .breadcrumb a:hover {
     color: #212529;
     text-decoration: underline;
+}
+
+/* ===================================
+   SMOOTH SCROLLING & ANIMATIONS
+   =================================== */
+
+/* Smooth scrolling behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Fade-in animation for product categories */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.product-categories.animate .col-md-4 {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.product-categories.animate .col-md-4:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.product-categories.animate .col-md-4:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.product-categories.animate .col-md-4:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+/* ===================================
+   PRODUCT CATEGORY BUTTONS
+   =================================== */
+
+/* Style for product category buttons on homepage */
+.product-categories .btn-brown {
+    border: 2px solid #8B4513;
+    transition: all 0.3s ease;
+}
+
+.product-categories .btn-brown:hover {
+    background-color: #fff;
+    color: #8B4513;
+    border-color: #8B4513;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
 }

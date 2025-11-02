@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ product.name }} - Cruzy Coffee Co.</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body class="site-bg text-dark d-flex flex-column min-vh-100">
-
-
-     <!-- Navbar -->
+    
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light site-nav shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
@@ -21,7 +20,6 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navmenu">
-                <!-- Main navigation links (centered) -->
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item px-3">
                         <a class="nav-link" href="{{ url_for('index') }}">Home</a>
@@ -47,9 +45,23 @@
                     </li>
                 </ul>
 
-                <!-- Right-aligned: Account + Cart -->
                 <ul class="navbar-nav ms-auto">
-                    <!-- Account dropdown -->
+                    {% if session.user_role in ['admin', 'manager'] %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                {% if session.user_role == 'manager' %}Manager Tools{% else %}Admin Tools{% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='add') }}">Add Product</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='edit') }}">Edit Products</a></li>
+                                {% if session.user_role == 'manager' %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">Manage Staff</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    {% endif %}
+
                     {% if session.user_id %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
@@ -70,7 +82,6 @@
                         </li>
                     {% endif %}
 
-                    <!-- Cart dropdown with icon -->
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
@@ -96,6 +107,124 @@
             </div>
         </div>
     </nav>
+
+    <!-- Product Detail -->
+    <section class="container py-5">
+        <div class="row">
+            <!-- Product Image -->
+            <div class="col-md-6 mb-4">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                     class="img-fluid rounded shadow" 
+                     alt="{{ product.name }}">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                     class="img-fluid rounded shadow" 
+                     alt="{{ product.name }}">
+                {% endif %}
+            </div>
+
+            <!-- Product Info -->
+            <div class="col-md-6">
+                <h1 class="display-5 fw-bold mb-3">{{ product.name }}</h1>
+                
+                {% if session.user_role in ['admin', 'manager'] %}
+                <div class="mb-3">
+                    <span class="badge bg-secondary">SKU: {{ product.sku }}</span>
+                    <span class="badge bg-info">Stock: {{ product.stock }}</span>
+                    <a href="{{ url_for('manage_product', action='edit', sku=product.sku) }}" 
+                       class="badge bg-warning text-dark">
+                        ✏️ Edit Product
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if product.brand %}
+                <p class="text-muted mb-2"><strong>Brand:</strong> {{ product.brand }}</p>
+                {% endif %}
+
+                {% if product.category %}
+                <p class="text-muted mb-2">
+                    <strong>Category:</strong> 
+                    <span class="badge bg-dark">{{ product.category }}</span>
+                    {% if product.subcategory %}
+                    <span class="badge bg-secondary">{{ product.subcategory }}</span>
+                    {% endif %}
+                </p>
+                {% endif %}
+
+                <h2 class="text-primary mb-4">${{ '%.2f'|format(product.price) }}</h2>
+
+                {% if product.description %}
+                <div class="mb-4">
+                    <h5>Description</h5>
+                    <p class="lead">{{ product.description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Add to Cart -->
+                <div class="d-grid gap-2 mb-3">
+                    {% if product.stock and product.stock > 0 %}
+                    <button class="btn btn-dark btn-lg add-to-cart-btn" 
+                            data-product-id="{{ product.id }}">
+                        🛒 Add to Cart
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary btn-lg" disabled>
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                    
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        ← Back to Shopping
+                    </a>
+                </div>
+
+                <!-- Stock Status -->
+                {% if product.stock %}
+                    {% if product.stock > 10 %}
+                    <p class="text-success"><strong>✓ In Stock</strong></p>
+                    {% elif product.stock > 0 %}
+                    <p class="text-warning"><strong>⚠️ Only {{ product.stock }} left in stock</strong></p>
+                    {% else %}
+                    <p class="text-danger"><strong>✗ Out of Stock</strong></p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        {% if related_products %}
+        <hr class="my-5">
+        <h3 class="mb-4">You May Also Like</h3>
+        <div class="row g-4">
+            {% for related in related_products %}
+            <div class="col-md-3">
+                <div class="card product-card h-100">
+                    {% if related.image %}
+                    <img src="{{ url_for('static', filename='img/' + related.image) }}" 
+                         class="card-img-top" 
+                         alt="{{ related.name }}">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                         class="card-img-top" 
+                         alt="{{ related.name }}">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ related.name }}</h6>
+                        <p class="fw-bold mt-auto mb-2">${{ '%.2f'|format(related.price) }}</p>
+                        <a href="{{ url_for('product_detail', product_id=related.id) }}" 
+                           class="btn btn-sm btn-outline-dark">
+                            View Product
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
     <!-- Footer -->
     <footer class="site-footer mt-auto py-3">
         <div class="container text-center text-muted small">
@@ -103,21 +232,7 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const ddToggle = document.getElementById('cartDropdown');
-        if (ddToggle) {
-          ddToggle.addEventListener('show.bs.dropdown', () => {
-            if (typeof MiniCart !== 'undefined') {
-              MiniCart.refresh();
-            }
-          });
-        }
-      });
-    </script>
 </body>
 </html>

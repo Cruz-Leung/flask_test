@@ -437,13 +437,26 @@ def product_detail(product_id):
     product = conn.execute('''
         SELECT * FROM products WHERE id = ?
     ''', (product_id,)).fetchone()
+    
+    # Get related products from same category
+    related_products = []
+    if product:
+        related_products = conn.execute('''
+            SELECT * FROM products 
+            WHERE category = ? AND id != ? 
+            LIMIT 4
+        ''', (product['category'], product_id)).fetchall()
+    
     conn.close()
     
     if product is None:
         flash('Product not found', 'danger')
         return redirect(url_for('index'))
     
-    return render_template('product_detail.html', product=product, year=2025)
+    return render_template('product_detail.html', 
+                         product=product, 
+                         related_products=related_products,
+                         year=datetime.now().year)
 
 # CA    S - Consolidated
 @app.route('/cart')
@@ -470,7 +483,36 @@ def cart_add():
     # Get product from database
     conn = get_db_connection()
     product = conn.execute('SELECT * FROM products WHERE id = ?', (product_id,)).fetchone()
-    conn.close()
+    conn.close()    # ...existing code...
+    
+    @app.route("/product/<int:product_id>")
+    def product_detail(product_id):
+        conn = get_db_connection()
+        product = conn.execute('''
+            SELECT * FROM products WHERE id = ?
+        ''', (product_id,)).fetchone()
+        
+        # Get related products from same category
+        related_products = []
+        if product:
+            related_products = conn.execute('''
+                SELECT * FROM products 
+                WHERE category = ? AND id != ? 
+                LIMIT 4
+            ''', (product['category'], product_id)).fetchall()
+        
+        conn.close()
+        
+        if product is None:
+            flash('Product not found', 'danger')
+            return redirect(url_for('index'))
+        
+        return render_template('product_detail.html', 
+                             product=product, 
+                             related_products=related_products,
+                             year=datetime.now().year)
+    
+    # ...existing code...
     
     if not product:
         return jsonify({'success': False, 'message': 'Product not found'}), 404

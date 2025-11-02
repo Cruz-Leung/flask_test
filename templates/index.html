@@ -119,7 +119,7 @@
         <div class="container py-6">
             <h1 class="display-4 fw-bold">Discover exceptional coffee</h1>
             <p class="lead mb-4">Specialty beans, premium machines and crafted accessories.</p>
-            <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-outline-light btn-lg">Shop Coffee</a>
+            <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
         </div>
     </section>
 
@@ -159,7 +159,7 @@
     </section>
 
     <!-- Product Categories -->
-    <section class="container py-5">
+    <section id="product-categories" class="container py-5 product-categories">
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="card product-card h-100">
@@ -205,8 +205,8 @@
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 
     <script>
-      // Load/refresh mini cart when opening the dropdown
       document.addEventListener('DOMContentLoaded', () => {
+        // Mini cart refresh
         const ddToggle = document.getElementById('cartDropdown');
         if (ddToggle) {
           ddToggle.addEventListener('show.bs.dropdown', () => {
@@ -214,6 +214,41 @@
               MiniCart.refresh();
             }
           });
+        }
+
+        // Smooth scroll to product categories with animation
+        const scrollButton = document.querySelector('.scroll-to-categories');
+        const productCategories = document.getElementById('product-categories');
+        
+        if (scrollButton && productCategories) {
+          scrollButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Scroll to the section
+            productCategories.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'start'
+            });
+            
+            // Add animation class after scroll
+            setTimeout(() => {
+              productCategories.classList.add('animate');
+            }, 500);
+          });
+        }
+
+        // Trigger animation on page load if already at the section
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('animate');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.2 });
+
+        if (productCategories) {
+          observer.observe(productCategories);
         }
       });
     </script>
