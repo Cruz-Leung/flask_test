@@ -8,6 +8,95 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body class="site-bg text-dark d-flex flex-column min-vh-100">
+
+
+     <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light site-nav shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='img/coffee_logo.png') }}" alt="Cruzy Coffee Co." height="40" class="me-2">
+                <span>Cruzy Coffee Co.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navmenu">
+                <!-- Main navigation links (centered) -->
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item dropdown px-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="machinesDropdown" role="button" data-bs-toggle="dropdown">
+                            Shop Machines
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('machines', category='semi-auto') }}">Semi-Automatic</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('machines', category='pod') }}">Pod Machines</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('machines', category='fully-auto') }}">Fully Automatic</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ url_for('beans') }}">Shop Beans</a>
+                    </li>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ url_for('accessories') }}">Shop Accessories</a>
+                    </li>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                    </li>
+                </ul>
+
+                <!-- Right-aligned: Account + Cart -->
+                <ul class="navbar-nav ms-auto">
+                    <!-- Account dropdown -->
+                    {% if session.user_id %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
+                                {{ session.user_name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('account') }}">My Account</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                        </li>
+                    {% endif %}
+
+                    <!-- Cart dropdown with icon -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
+                            <span id="mini-cart-count" class="badge bg-dark ms-1">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end mini-cart-menu" aria-labelledby="cartDropdown">
+                            <div id="mini-cart-content" class="mini-cart--dark">
+                                <div class="mini-cart-header d-flex justify-content-between align-items-center">
+                                    <strong>Cart</strong>
+                                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
+                                </div>
+                                <div class="mini-cart-body mt-2">
+                                    <div class="mini-cart-empty">Your cart is empty.</div>
+                                </div>
+                                <div class="mt-3 d-grid gap-2">
+                                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-dark btn-sm">View Cart</a>
+                                    <a href="{{ url_for('checkout') }}" class="btn btn-dark btn-sm">Checkout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
     <div class="container py-5">
         <h1 class="mb-4">My Account</h1>
         

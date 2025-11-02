@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Staff Management - Cruzy Coffee Co.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="site-bg text-dark d-flex flex-column min-vh-100">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Staff Management</h1>
+            <a href="{{ url_for('add_staff') }}" class="btn btn-dark">
+                <i class="bi bi-plus-circle"></i> Add Staff Member
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in staff %}
+                            <tr>
+                                <td>{{ member.name }}</td>
+                                <td>{{ member.email }}</td>
+                                <td>
+                                    {% if member.role == 'manager' %}
+                                        <span class="badge bg-danger">Manager</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Admin</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ member.created_at[:10] }}</td>
+                                <td>
+                                    <a href="{{ url_for('edit_staff', staff_id=member.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    {% if member.id != session.user_id %}
+                                    <form action="{{ url_for('delete_staff', staff_id=member.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this staff member?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

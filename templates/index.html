@@ -46,8 +46,25 @@
                     </li>
                 </ul>
 
-                <!-- Right-aligned: Account + Cart -->
+                <!-- Right-aligned: Role-based menu + Account + Cart -->
                 <ul class="navbar-nav ms-auto">
+                    <!-- Role-based admin/manager menu -->
+                    {% if session.user_role in ['admin', 'manager'] %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                {% if session.user_role == 'manager' %}Manager Tools{% else %}Admin Tools{% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='add') }}">Add Product</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='edit') }}">Edit Products</a></li>
+                                {% if session.user_role == 'manager' %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">Manage Staff</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    {% endif %}
+
                     <!-- Account dropdown -->
                     {% if session.user_id %}
                         <li class="nav-item dropdown">

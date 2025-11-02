@@ -8,6 +8,7 @@ from flask import (
     request, 
     redirect, 
     flash,
+    abort,
 )
 from werkzeug.utils import secure_filename
 from pathlib import Path
@@ -18,7 +19,7 @@ from functools import wraps
 app = Flask(__name__)
 
 # Configure your secret key for session management
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'your_secret_key_here_change_in_production'
 
 STATIC_IMG_DIR = Path(__file__).parent / "static" / "img"
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "avif"} 
@@ -36,6 +37,10 @@ def hash_password(password):
     """Hash a password using SHA-256"""
     return hashlib.sha256(password.encode()).hexdigest()
 
+def get_user_role():
+    """Get the current user's role from session"""
+    return session.get('user_role', 'customer')
+
 def login_required(f):
     """Decorator to require login for certain routes"""
     @wraps(f)
@@ -43,6 +48,36 @@ def login_required(f):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    """Decorator to require admin or manager role"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login', next=request.url))
+        
+        role = get_user_role()
+        if role not in ['admin', 'manager']:
+            flash('Access denied. Admin privileges required.', 'danger')
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def manager_required(f):
+    """Decorator to require manager role only"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login', next=request.url))
+        
+        role = get_user_role()
+        if role != 'manager':
+            flash('Access denied. Manager privileges required.', 'danger')
+            abort(403)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -87,9 +122,11 @@ def accessories():
 def about():
     return render_template("about.html", year=2025)
 
+# ADMIN ROUTES - Product Management
 @app.route("/admin/product", methods=['GET', 'POST'])
+@admin_required
 def manage_product():
-    action = request.args.get('action', 'edit')  # 'edit' or 'add'
+    action = request.args.get('action', 'edit')
     sku = request.args.get('sku') or request.form.get('sku')
     conn = get_db_connection()
 
@@ -103,7 +140,6 @@ def manage_product():
         stock = request.form.get('stock')
         description = request.form.get('description')
 
-        # handle image
         image = request.files.get('image')
         image_filename = None
         if image and image.filename and allowed_file(image.filename):
@@ -140,9 +176,8 @@ def manage_product():
                 image_filename = f"{sku}.{ext}"
                 STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
                 image.save(STATIC_IMG_DIR / image_filename)
-                flash(f"Image '{image_filename}' uploaded successfully.", "success")
             else:
-                flash("Invalid image type. Please upload a valid image.", "danger")
+                flash("Invalid image type.", "danger")
                 conn.close()
                 return redirect(request.url)
 
@@ -167,13 +202,178 @@ def manage_product():
         conn.close()
         return redirect(url_for('manage_product', sku=sku, action='edit'))
 
-    # GET REQUEST
     product = None
     if sku and action == 'edit':
         product = conn.execute('SELECT * FROM products WHERE sku = ?', (sku,)).fetchone()
     conn.close()
 
     return render_template('edit_product.html', product=product, action=action)
+
+@app.route("/admin/product/delete/<sku>", methods=['POST'])
+@admin_required
+def delete_product(sku):
+    conn = get_db_connection()
+    try:
+        # Check if product exists
+        product = conn.execute("SELECT * FROM products WHERE sku = ?", (sku,)).fetchone()
+        if not product:
+            flash("Product not found.", "danger")
+            return redirect(url_for('manage_product', action='edit'))
+        
+        # Delete the product
+        conn.execute("DELETE FROM products WHERE sku = ?", (sku,))
+        conn.commit()
+        
+        # Try to delete the image file if it exists
+        if product['image']:
+            image_path = STATIC_IMG_DIR / product['image']
+            if image_path.exists():
+                try:
+                    image_path.unlink()
+                except Exception as e:
+                    print(f"Could not delete image file: {e}")
+        
+        flash(f"✅ Product '{product['name']}' has been deleted.", "success")
+    except Exception as e:
+        flash(f"❌ Error deleting product: {e}", "danger")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('manage_product', action='add'))
+
+# MANAGER ROUTES - Staff Management
+@app.route("/manager/staff")
+@manager_required
+def manage_staff():
+    conn = get_db_connection()
+    staff = conn.execute("""
+        SELECT id, name, email, role, created_at 
+        FROM customers 
+        WHERE role IN ('admin', 'manager')
+        ORDER BY 
+            CASE role 
+                WHEN 'manager' THEN 1 
+                WHEN 'admin' THEN 2 
+            END,
+            name
+    """).fetchall()
+    conn.close()
+    return render_template('manage_staff.html', staff=staff, year=2025)
+
+@app.route("/manager/staff/add", methods=['GET', 'POST'])
+@manager_required
+def add_staff():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        role = request.form.get('role', 'admin')
+        phone = request.form.get('phone', '').strip()
+        
+        # Validate
+        if not name or not email or not password:
+            flash('Name, email, and password are required.', 'danger')
+            return redirect(url_for('add_staff'))
+        
+        if role not in ['admin', 'manager']:
+            flash('Invalid role selected.', 'danger')
+            return redirect(url_for('add_staff'))
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'danger')
+            return redirect(url_for('add_staff'))
+        
+        hashed_password = hash_password(password)
+        
+        conn = get_db_connection()
+        try:
+            conn.execute("""
+                INSERT INTO customers (name, email, password, phone, role)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, email, hashed_password, phone, role))
+            conn.commit()
+            flash(f'✅ {role.capitalize()} account created for {name}!', 'success')
+            return redirect(url_for('manage_staff'))
+        except sqlite3.IntegrityError:
+            flash('An account with this email already exists.', 'danger')
+        except Exception as e:
+            flash(f'Error creating account: {e}', 'danger')
+        finally:
+            conn.close()
+    
+    return render_template('add_staff.html', year=2025)
+
+@app.route("/manager/staff/edit/<int:staff_id>", methods=['GET', 'POST'])
+@manager_required
+def edit_staff(staff_id):
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        role = request.form.get('role', 'admin')
+        new_password = request.form.get('new_password', '')
+        
+        if role not in ['admin', 'manager']:
+            flash('Invalid role selected.', 'danger')
+            return redirect(url_for('edit_staff', staff_id=staff_id))
+        
+        try:
+            if new_password:
+                if len(new_password) < 6:
+                    flash('Password must be at least 6 characters.', 'danger')
+                    return redirect(url_for('edit_staff', staff_id=staff_id))
+                hashed_password = hash_password(new_password)
+                conn.execute("""
+                    UPDATE customers 
+                    SET name = ?, phone = ?, role = ?, password = ?
+                    WHERE id = ?
+                """, (name, phone, role, hashed_password, staff_id))
+            else:
+                conn.execute("""
+                    UPDATE customers 
+                    SET name = ?, phone = ?, role = ?
+                    WHERE id = ?
+                """, (name, phone, role, staff_id))
+            
+            conn.commit()
+            flash('Staff member updated successfully!', 'success')
+            return redirect(url_for('manage_staff'))
+        except Exception as e:
+            flash(f'Error updating staff: {e}', 'danger')
+        finally:
+            conn.close()
+    
+    staff_member = conn.execute("""
+        SELECT * FROM customers WHERE id = ? AND role IN ('admin', 'manager')
+    """, (staff_id,)).fetchone()
+    conn.close()
+    
+    if not staff_member:
+        flash('Staff member not found.', 'danger')
+        return redirect(url_for('manage_staff'))
+    
+    return render_template('edit_staff.html', staff=staff_member, year=2025)
+
+@app.route("/manager/staff/delete/<int:staff_id>", methods=['POST'])
+@manager_required
+def delete_staff(staff_id):
+    # Prevent deleting yourself
+    if staff_id == session.get('user_id'):
+        flash('You cannot delete your own account.', 'danger')
+        return redirect(url_for('manage_staff'))
+    
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM customers WHERE id = ? AND role IN ('admin', 'manager')", (staff_id,))
+        conn.commit()
+        flash('Staff member removed successfully.', 'success')
+    except Exception as e:
+        flash(f'Error removing staff: {e}', 'danger')
+    finally:
+        conn.close()
+    
+    return redirect(url_for('manage_staff'))
 
 @app.route("/product/<int:product_id>")
 def product_detail(product_id):
@@ -189,16 +389,10 @@ def product_detail(product_id):
     
     return render_template('product_detail.html', product=product, year=2025)
 
-# Helpers for products and cart
+# Cart helper functions
 def get_product_by_id(product_id):
     conn = get_db_connection()
     row = conn.execute("SELECT id, name, price, image FROM products WHERE id = ?", (product_id,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def get_product_by_sku(sku):
-    conn = get_db_connection()
-    row = conn.execute("SELECT id, name, price, image FROM products WHERE sku = ?", (sku,)).fetchone()
     conn.close()
     return dict(row) if row else None
 
@@ -276,7 +470,7 @@ def cart_count():
     _, count = cart_totals(cart)
     return jsonify({'count': count})
 
-# Checkout and orders (SINGLE DEFINITION)
+# Checkout and orders
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     cart = get_cart()
@@ -285,7 +479,6 @@ def checkout():
         return redirect(url_for('view_cart'))
 
     if request.method == 'POST':
-        # If user is logged in, use their ID, otherwise create/find customer
         if 'user_id' in session:
             customer_id = session['user_id']
         else:
@@ -300,14 +493,12 @@ def checkout():
 
             conn = get_db_connection()
             cur = conn.cursor()
-            # get or create customer by email
             cur.execute("SELECT id FROM customers WHERE email = ?", (email,))
             row = cur.fetchone()
             if row:
                 customer_id = row['id']
                 cur.execute("UPDATE customers SET name = ?, phone = ?, address = ? WHERE id = ?", (name, phone, address, customer_id))
             else:
-                # Create temporary password for guest checkout
                 temp_password = hash_password(email + "temp")
                 cur.execute("INSERT INTO customers (name, email, password, phone, address) VALUES (?, ?, ?, ?, ?)", 
                            (name, email, temp_password, phone, address))
@@ -315,14 +506,12 @@ def checkout():
             conn.commit()
             conn.close()
 
-        # Create order
         conn = get_db_connection()
         cur = conn.cursor()
         total, _ = cart_totals(cart)
         cur.execute("INSERT INTO orders (customer_id, status, total) VALUES (?, ?, ?)", (customer_id, 'pending', total))
         order_id = cur.lastrowid
 
-        # add order_items and decrement stock
         for item in cart.values():
             product_id = item['id']
             qty = item['quantity']
@@ -338,11 +527,9 @@ def checkout():
         conn.commit()
         conn.close()
 
-        # clear cart
         session['cart'] = {}
         return redirect(url_for('order_success', order_id=order_id))
 
-    # Pre-fill form if user is logged in
     user_data = None
     if 'user_id' in session:
         conn = get_db_connection()
@@ -379,7 +566,6 @@ def register():
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
 
-        # Validation
         if not name or not email or not password:
             flash('Name, email, and password are required.', 'danger')
             return redirect(url_for('register'))
@@ -392,14 +578,14 @@ def register():
             flash('Password must be at least 6 characters long.', 'danger')
             return redirect(url_for('register'))
 
-        # Hash password and create account
         hashed_password = hash_password(password)
         
         conn = get_db_connection()
         try:
+            # All new registrations are customers by default
             conn.execute("""
-                INSERT INTO customers (name, email, password, phone, address)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO customers (name, email, password, phone, address, role)
+                VALUES (?, ?, ?, ?, ?, 'customer')
             """, (name, email, hashed_password, phone, address))
             conn.commit()
             flash('Account created successfully! Please log in.', 'success')
@@ -429,7 +615,7 @@ def login():
         
         conn = get_db_connection()
         user = conn.execute("""
-            SELECT id, name, email FROM customers 
+            SELECT id, name, email, role FROM customers 
             WHERE email = ? AND password = ?
         """, (email, hashed_password)).fetchone()
         conn.close()
@@ -438,9 +624,16 @@ def login():
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
-            flash(f'Welcome back, {user["name"]}!', 'success')
+            session['user_role'] = user['role']
             
-            # Redirect to 'next' page if it exists, otherwise to index
+            # Role-specific welcome message
+            if user['role'] == 'manager':
+                flash(f'Welcome back, Manager {user["name"]}!', 'success')
+            elif user['role'] == 'admin':
+                flash(f'Welcome back, Admin {user["name"]}!', 'success')
+            else:
+                flash(f'Welcome back, {user["name"]}!', 'success')
+            
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('index'))
         else:
@@ -503,6 +696,15 @@ def edit_account():
     conn.close()
     
     return render_template('edit_account.html', user=user, year=2025)
+
+# Error handlers
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('errors/403.html'), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('errors/404.html'), 404
 
 if __name__ == '__main__':
     app.debug = True
