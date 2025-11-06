@@ -1,5 +1,4 @@
-<script>
-console.log('cart.js loaded!');
+console.log('✅ cart.js file loaded successfully!');
 
 const Cart = {
     // Add product to cart
@@ -15,9 +14,8 @@ const Cart = {
                 body: JSON.stringify({ product_id: parseInt(productId) })
             });
 
-            console.log('Response status:', response.status);
             const data = await response.json();
-            console.log('Response data:', data);
+            console.log('Server response:', data);
             
             if (data.success) {
                 // Show success message
@@ -92,12 +90,9 @@ const Cart = {
 
     // Show notification
     showNotification(message, type) {
-        console.log('Showing notification:', message, type);
-        
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
         notification.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -105,7 +100,6 @@ const Cart = {
         
         document.body.appendChild(notification);
         
-        // Auto remove after 3 seconds
         setTimeout(() => {
             notification.remove();
         }, 3000);
@@ -146,7 +140,6 @@ const MiniCart = {
         // Update cart count
         const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
         cartCount.textContent = totalItems;
-        console.log('Updated cart count to:', totalItems);
 
         // Render cart items
         if (items.length === 0) {
@@ -184,32 +177,32 @@ const MiniCart = {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded event fired');
+    console.log('🚀 DOMContentLoaded - Initializing cart system');
     
     // Add click handlers to all "Add to Cart" buttons
     const buttons = document.querySelectorAll('.add-to-cart-btn');
-    console.log('Found', buttons.length, 'add-to-cart buttons');
+    console.log(`Found ${buttons.length} add-to-cart buttons`);
     
     buttons.forEach((button, index) => {
         const productId = button.getAttribute('data-product-id');
-        console.log(`Button ${index}: product ID =`, productId);
+        console.log(`Button ${index}: product ID = ${productId}`);
         
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Button clicked! Product ID:', productId);
+            console.log('🛒 Button clicked! Product ID:', productId);
             
             if (productId) {
                 Cart.add(productId);
             } else {
-                console.error('No product ID found on button!');
+                console.error('❌ No product ID found on button!');
             }
         });
     });
 
     // Refresh mini cart on page load
-    console.log('Refreshing mini cart...');
     MiniCart.refresh();
+    console.log('✅ Cart system initialized');
 });
 
-console.log('cart.js fully loaded - Cart and MiniCart objects defined');
-</script>
+console.log('✅ Cart and MiniCart objects defined');
+

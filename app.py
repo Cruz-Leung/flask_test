@@ -19,9 +19,8 @@ from datetime import datetime
 
 
 app = Flask(__name__)
-
-# Configure your secret key for session management
-app.secret_key = 'your_secret_key_here_change_in_production'
+app.config['SECRET_KEY'] = 'your-secret-key-here-change-this-in-production'  # Add this line
+app.config['SESSION_TYPE'] = 'filesystem'  # Optional but recommended
 
 STATIC_IMG_DIR = Path(__file__).parent / "static" / "img"
 STATIC_DIR = Path(__file__).parent / 'static'
@@ -458,22 +457,9 @@ def product_detail(product_id):
                          related_products=related_products,
                          year=datetime.now().year)
 
-# CA    S - Consolidated
-@app.route('/cart')
-def view_cart():
-    """Main cart page"""
-    cart = session.get('cart', {})
-    cart_items = list(cart.values())
-    cart_total = sum(item['price'] * item['quantity'] for item in cart_items)
-    
-    return render_template('view_cart.html', 
-                         cart_items=cart_items, 
-                         cart_total=cart_total,
-                         year=datetime.now().year)
-
+# CART API ROUTES
 @app.route("/cart/add", methods=['POST'])
 def cart_add():
-    """Add product to cart via AJAX"""
     data = request.get_json()
     product_id = data.get('product_id')
     
@@ -483,36 +469,7 @@ def cart_add():
     # Get product from database
     conn = get_db_connection()
     product = conn.execute('SELECT * FROM products WHERE id = ?', (product_id,)).fetchone()
-    conn.close()    # ...existing code...
-    
-    @app.route("/product/<int:product_id>")
-    def product_detail(product_id):
-        conn = get_db_connection()
-        product = conn.execute('''
-            SELECT * FROM products WHERE id = ?
-        ''', (product_id,)).fetchone()
-        
-        # Get related products from same category
-        related_products = []
-        if product:
-            related_products = conn.execute('''
-                SELECT * FROM products 
-                WHERE category = ? AND id != ? 
-                LIMIT 4
-            ''', (product['category'], product_id)).fetchall()
-        
-        conn.close()
-        
-        if product is None:
-            flash('Product not found', 'danger')
-            return redirect(url_for('index'))
-        
-        return render_template('product_detail.html', 
-                             product=product, 
-                             related_products=related_products,
-                             year=datetime.now().year)
-    
-    # ...existing code...
+    conn.close()
     
     if not product:
         return jsonify({'success': False, 'message': 'Product not found'}), 404
@@ -550,7 +507,6 @@ def cart_add():
 
 @app.route("/cart/update", methods=['POST'])
 def cart_update():
-    """Update cart quantity via AJAX"""
     data = request.get_json()
     product_id = str(data.get('product_id'))
     quantity = data.get('quantity', 1)
@@ -574,7 +530,6 @@ def cart_update():
 
 @app.route("/cart/remove", methods=['POST'])
 def cart_remove():
-    """Remove product from cart via AJAX"""
     data = request.get_json()
     product_id = str(data.get('product_id'))
     
@@ -593,7 +548,7 @@ def cart_remove():
 
 @app.route("/cart/mini")
 def cart_mini():
-    """API endpoint for mini cart data (AJAX)"""
+    """API endpoint for mini cart data"""
     if 'cart' not in session or not session['cart']:
         return jsonify({
             'success': True,
@@ -611,6 +566,19 @@ def cart_mini():
         'total': total
     })
 
+# ADD THIS ROUTE:
+@app.route('/cart')
+def view_cart():
+    """Main cart page"""
+    cart = session.get('cart', {})
+    cart_items = list(cart.values())
+    cart_total = sum(item['price'] * item['quantity'] for item in cart_items)
+    
+    return render_template('view_cart.html', 
+                         cart_items=cart_items, 
+                         cart_total=cart_total,
+                         year=datetime.now().year)
+
 @app.route('/cart/clear', methods=['POST'])
 def clear_cart():
     """Clear entire cart"""
@@ -621,54 +589,95 @@ def clear_cart():
 # Checkout and orders
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    cart = session.get('cart', {})  # Changed from get_cart()
+    cart = session.get('cart', {})
     if not cart:
         flash('Your cart is empty.', 'warning')
         return redirect(url_for('view_cart'))
 
     if request.method == 'POST':
+        # Get form data
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        city = request.form.get('city', '').strip()
+        state = request.form.get('state', '').strip()
+        postcode = request.form.get('postcode', '').strip()
+        country = request.form.get('country', '').strip()
+        payment_method = request.form.get('payment_method', 'card')
+
+        # Validate required fields
+        if not all([name, email, phone, address, city, state, postcode, country]):
+            flash('Please fill in all required fields.', 'danger')
+            return redirect(url_for('checkout'))
+
+        # Get or create customer
         if 'user_id' in session:
             customer_id = session['user_id']
+            # Update customer info
+            conn = get_db_connection()
+            conn.execute("""
+                UPDATE customers 
+                SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, country = ?
+                WHERE id = ?
+            """, (name, phone, address, city, state, postcode, country, customer_id))
+            conn.commit()
+            conn.close()
         else:
-            name = request.form.get('name', '').strip()
-            email = request.form.get('email', '').strip()
-            phone = request.form.get('phone', '').strip()
-            address = request.form.get('address', '').strip()
-
-            if not name or not email or not address:
-                flash('Name, email and address are required.', 'danger')
-                return redirect(url_for('checkout'))
-
             conn = get_db_connection()
             cur = conn.cursor()
+            
+            # Check if customer exists
             cur.execute("SELECT id FROM customers WHERE email = ?", (email,))
             row = cur.fetchone()
+            
             if row:
                 customer_id = row['id']
-                cur.execute("UPDATE customers SET name = ?, phone = ?, address = ? WHERE id = ?", (name, phone, address, customer_id))
+                # Update existing customer
+                cur.execute("""
+                    UPDATE customers 
+                    SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, country = ?
+                    WHERE id = ?
+                """, (name, phone, address, city, state, postcode, country, customer_id))
             else:
+                # Create new customer
                 temp_password = hash_password(email + "temp")
-                cur.execute("INSERT INTO customers (name, email, password, phone, address) VALUES (?, ?, ?, ?, ?)", 
-                           (name, email, temp_password, phone, address))
+                cur.execute("""
+                    INSERT INTO customers (name, email, password, phone, address, city, state, postcode, country) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (name, email, temp_password, phone, address, city, state, postcode, country))
                 customer_id = cur.lastrowid
+            
             conn.commit()
             conn.close()
 
+        # Calculate total with tax
+        subtotal = sum(item['price'] * item['quantity'] for item in cart.values())
+        tax = subtotal * 0.1  # 10% GST
+        total = subtotal + tax
+
+        # Create order
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Calculate totals inline instead of using cart_totals()
-        total = sum(item['price'] * item['quantity'] for item in cart.values())
-        
-        cur.execute("INSERT INTO orders (customer_id, status, total) VALUES (?, ?, ?)", (customer_id, 'pending', total))
+        cur.execute("""
+            INSERT INTO orders (customer_id, status, total, payment_method, shipping_address) 
+            VALUES (?, ?, ?, ?, ?)
+        """, (customer_id, 'pending', total, payment_method, f"{address}, {city}, {state} {postcode}, {country}"))
         order_id = cur.lastrowid
 
+        # Add order items and update stock
         for item in cart.values():
-            product_id = item['product_id']  # Changed from item['id']
+            product_id = item['product_id']
             qty = item['quantity']
             unit_price = item['price']
-            cur.execute("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
-                        (order_id, product_id, qty, unit_price))
+            
+            cur.execute("""
+                INSERT INTO order_items (order_id, product_id, quantity, unit_price) 
+                VALUES (?, ?, ?, ?)
+            """, (order_id, product_id, qty, unit_price))
+            
+            # Update product stock
             cur.execute("""
                 UPDATE products
                 SET stock = CASE WHEN stock IS NOT NULL THEN MAX(stock - ?, 0) ELSE stock END
@@ -678,36 +687,59 @@ def checkout():
         conn.commit()
         conn.close()
 
+        # Clear cart
         session['cart'] = {}
+        session.modified = True
+
+        flash('Order placed successfully!', 'success')
         return redirect(url_for('order_success', order_id=order_id))
 
+    # GET request - show checkout form
     user_data = None
     if 'user_id' in session:
         conn = get_db_connection()
         user_data = conn.execute("SELECT * FROM customers WHERE id = ?", (session['user_id'],)).fetchone()
         conn.close()
 
-    # Calculate totals inline
-    total = sum(item['price'] * item['quantity'] for item in cart.values())
-    count = sum(item['quantity'] for item in cart.values())
+    cart_items = list(cart.values())
+    total = sum(item['price'] * item['quantity'] for item in cart_items)
+    count = sum(item['quantity'] for item in cart_items)
     
-    return render_template('checkout.html', cart=cart, total=total, count=count, user=user_data)
+    return render_template('checkout.html', 
+                         cart=cart_items, 
+                         total=total, 
+                         count=count,
+                         user=user_data,
+                         year=datetime.now().year)
 
-@app.route('/order/<int:order_id>')
+@app.route('/order-success/<int:order_id>')
 def order_success(order_id):
+    """Order confirmation page"""
     conn = get_db_connection()
-    order = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-    items = conn.execute("""
-        SELECT p.name, oi.quantity, oi.unit_price, p.image
-        FROM order_items oi
-        JOIN products p ON p.id = oi.product_id
+    order = conn.execute("""
+        SELECT o.*, c.name, c.email 
+        FROM orders o 
+        JOIN customers c ON o.customer_id = c.id 
+        WHERE o.id = ?
+    """, (order_id,)).fetchone()
+    
+    order_items = conn.execute("""
+        SELECT oi.*, p.name, p.image 
+        FROM order_items oi 
+        JOIN products p ON oi.product_id = p.id 
         WHERE oi.order_id = ?
     """, (order_id,)).fetchall()
+    
     conn.close()
+    
     if not order:
-        flash('Order not found.', 'danger')
+        flash('Order not found', 'danger')
         return redirect(url_for('index'))
-    return render_template('order_success.html', order=order, items=items)
+    
+    return render_template('order_success.html', 
+                         order=order, 
+                         order_items=order_items,
+                         year=datetime.now().year)
 
 # Authentication routes
 @app.route("/register", methods=['GET', 'POST'])

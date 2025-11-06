@@ -301,6 +301,28 @@ body.site-bg {
   background: #e9e9e9; color: #000;
 }
 
+/* ===================================
+   MINI CART STYLING
+   =================================== */
+
+/* Make all text in mini cart white for better visibility */
+.mini-cart--dark .mini-cart-item .text-muted {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.mini-cart--dark .mini-cart-item h6,
+.mini-cart--dark .mini-cart-item small {
+    color: #ffffff !important;
+}
+
+.mini-cart--dark .mini-cart-total {
+    color: #ffffff;
+}
+
+.mini-cart--dark .mini-cart-empty {
+    color: rgba(255, 255, 255, 0.9);
+}
+
 /* Product detail page */
 .breadcrumb {
     background-color: transparent;
