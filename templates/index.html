@@ -1,256 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cruzy Coffee Co. – Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body class="site-bg text-dark d-flex flex-column min-vh-100">
-    
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light site-nav shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='img/coffee_logo.png') }}" alt="Cruzy Coffee Co." height="40" class="me-2">
-                <span>Cruzy Coffee Co.</span>
+{% extends "base.html" %}
+
+{% block title %}Home - Cruzy Coffee Co.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero text-center text-white d-flex align-items-center"
+         style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}'); min-height:75vh; background-position:center; background-size:cover;">
+    <div class="container py-6">
+        <h1 class="display-4 fw-bold">Discover exceptional coffee</h1>
+        <p class="lead mb-4">Specialty beans, premium machines and crafted accessories.</p>
+        <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
+    </div>
+</section>
+
+<!-- Promotional cards -->
+<section class="container py-5">
+    <div class="row g-4 align-items-stretch">
+        <!-- Left: On Sale machine -->
+        <div class="col-12 col-lg-6">
+            <a href="{{ url_for('machines', category='semi-auto') }}" class="text-decoration-none">
+                <div class="position-relative rounded overflow-hidden hero-promo" 
+                     style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}'); background-size:cover; background-position:center;">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content p-5">
+                        <span class="badge bg-warning text-dark mb-3">On Sale</span>
+                        <h2 class="display-5 fw-bold text-white">Barista Express — 20% Off</h2>
+                        <p class="lead text-white">Limited time — our most-loved semi-automatic machine. Free shipping this week.</p>
+                        <button class="btn btn-light btn-lg">Shop Machines</button>
+                    </div>
+                </div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navmenu">
-                <!-- Main navigation links (centered) -->
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    <li class="nav-item dropdown px-3">
-                        <a class="nav-link dropdown-toggle" href="#" id="machinesDropdown" role="button" data-bs-toggle="dropdown">
-                            Machines
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='semi-auto') }}">Semi-Automatic</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='pod') }}">Pod Machines</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='fully-auto') }}">Fully Automatic</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('beans') }}">Beans</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('accessories') }}">Accessories</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
-                    </li>
-                </ul>
-
-                <!-- Right-aligned: Role-based menu + Account + Cart -->
-                <ul class="navbar-nav ms-auto">
-                    <!-- Role-based admin/manager menu -->
-                    {% if session.user_role in ['admin', 'manager'] %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                                {% if session.user_role == 'manager' %}Manager Tools{% else %}Admin Tools{% endif %}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='add') }}">Add Product</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='edit') }}">Edit Products</a></li>
-                                {% if session.user_role == 'manager' %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">Manage Staff</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                    {% endif %}
-
-                    <!-- Account dropdown -->
-                    {% if session.user_id %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
-                                {{ session.user_name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('account') }}">My Account</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
-                        </li>
-                    {% endif %}
-
-                    <!-- Cart dropdown with icon -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
-                            <span id="mini-cart-count" class="badge bg-dark ms-1">0</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end mini-cart-menu" aria-labelledby="cartDropdown">
-                            <div id="mini-cart-content" class="mini-cart--dark">
-                                <div class="mini-cart-header d-flex justify-content-between align-items-center">
-                                    <strong>Cart</strong>
-                                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
-                                </div>
-                                <div class="mini-cart-body mt-2">
-                                    <div class="mini-cart-empty">Your cart is empty.</div>
-                                </div>
-                                <div class="mt-3 d-grid gap-2">
-                                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-dark btn-sm">View Cart</a>
-                                    <a href="{{ url_for('checkout') }}" class="btn btn-dark btn-sm">Checkout</a>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
         </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <section class="hero text-center text-white d-flex align-items-center"
-             style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}'); min-height:75vh; background-position:center; background-size:cover;">
-        <div class="container py-6">
-            <h1 class="display-4 fw-bold">Discover exceptional coffee</h1>
-            <p class="lead mb-4">Specialty beans, premium machines and crafted accessories.</p>
-            <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
-        </div>
-    </section>
-
-    <!-- Promotional cards -->
-    <section class="container py-5">
-        <div class="row g-4 align-items-stretch">
-            <!-- Left: On Sale machine -->
-            <div class="col-12 col-lg-6">
-                <a href="{{ url_for('machines', category='semi-auto') }}" class="text-decoration-none">
-                    <div class="position-relative rounded overflow-hidden hero-promo" 
-                         style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}'); background-size:cover; background-position:center;">
-                        <div class="hero-overlay"></div>
-                        <div class="hero-content p-5">
-                            <span class="badge bg-warning text-dark mb-3">On Sale</span>
-                            <h2 class="display-5 fw-bold text-white">Barista Express — 20% Off</h2>
-                            <p class="lead text-white">Limited time — our most-loved semi-automatic machine. Free shipping this week.</p>
-                            <button class="btn btn-light btn-lg">Shop Machines</button>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Right: Membership option -->
-            <div class="col-12 col-lg-6">
-                <a href="{{ url_for('about') }}" class="text-decoration-none">
-                    <div class="position-relative rounded overflow-hidden" style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/promo_membership.jpg') }}'); background-size:cover; background-position:center;">
-                        <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(245,240,230,0.18), rgba(245,240,230,0.45));"></div>
-                        <div style="position:relative; z-index:2; padding:3.5rem;">
-                            <h2 class="display-5 fw-bold" style="color:#1A1A1A;">Join Cruzy Membership</h2>
-                            <p class="lead" style="color:#333333;">Exclusive discounts, early access to limited releases and free shipping for members.</p>
-                            <button class="btn btn-dark btn-lg">Become a Member</button>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Product Categories -->
-    <section id="product-categories" class="container py-5 product-categories">
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card product-card h-100">
-                    <img src="{{ url_for('static', filename='img/coffee_machine_home_pic.webp') }}" class="card-img-top" alt="Machines">
-                    <div class="card-body">
-                        <h5 class="card-title">Coffee Machines</h5>
-                        <p class="card-text text-muted">Home and prosumer espresso machines.</p>
-                        <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-brown">View Machines</a>
+        <!-- Right: Membership option -->
+        <div class="col-12 col-lg-6">
+            <a href="{{ url_for('about') }}" class="text-decoration-none">
+                <div class="position-relative rounded overflow-hidden" style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/promo_membership.jpg') }}'); background-size:cover; background-position:center;">
+                    <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(245,240,230,0.18), rgba(245,240,230,0.45));"></div>
+                    <div style="position:relative; z-index:2; padding:3.5rem;">
+                        <h2 class="display-5 fw-bold" style="color:#1A1A1A;">Join Cruzy Membership</h2>
+                        <p class="lead" style="color:#333333;">Exclusive discounts, early access to limited releases and free shipping for members.</p>
+                        <button class="btn btn-dark btn-lg">Become a Member</button>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card product-card h-100">
-                    <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" class="card-img-top" alt="Beans">
-                    <div class="card-body">
-                        <h5 class="card-title">Coffee Beans</h5>
-                        <p class="card-text text-muted">Single origin & signature blends.</p>
-                        <a href="{{ url_for('beans') }}" class="btn btn-brown">Browse Beans</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card product-card h-100">
-                    <img src="{{ url_for('static', filename='img/coffee_tools_home.webp') }}" class="card-img-top" alt="Accessories">
-                    <div class="card-body">
-                        <h5 class="card-title">Accessories</h5>
-                        <p class="card-text text-muted">Grinders, tampers, cups & more.</p>
-                        <a href="{{ url_for('accessories') }}" class="btn btn-brown">See Accessories</a>
-                    </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Product Categories -->
+<section id="product-categories" class="container py-5 product-categories">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card product-card h-100">
+                <img src="{{ url_for('static', filename='img/coffee_machine_home_pic.webp') }}" class="card-img-top" alt="Machines">
+                <div class="card-body">
+                    <h5 class="card-title">Coffee Machines</h5>
+                    <p class="card-text text-muted">Home and prosumer espresso machines.</p>
+                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-brown">View Machines</a>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="site-footer mt-auto py-3">
-        <div class="container text-center text-muted small">
-            &copy; {{ year }} Cruzy Coffee Co. All rights reserved.
+        <div class="col-md-4">
+            <div class="card product-card h-100">
+                <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" class="card-img-top" alt="Beans">
+                <div class="card-body">
+                    <h5 class="card-title">Coffee Beans</h5>
+                    <p class="card-text text-muted">Single origin & signature blends.</p>
+                    <a href="{{ url_for('beans') }}" class="btn btn-brown">Browse Beans</a>
+                </div>
+            </div>
         </div>
-    </footer>
+        <div class="col-md-4">
+            <div class="card product-card h-100">
+                <img src="{{ url_for('static', filename='img/coffee_tools_home.webp') }}" class="card-img-top" alt="Accessories">
+                <div class="card-body">
+                    <h5 class="card-title">Accessories</h5>
+                    <p class="card-text text-muted">Grinders, tampers, cups & more.</p>
+                    <a href="{{ url_for('accessories') }}" class="btn btn-brown">See Accessories</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        // Mini cart refresh
-        const ddToggle = document.getElementById('cartDropdown');
-        if (ddToggle) {
-          ddToggle.addEventListener('show.bs.dropdown', () => {
-            if (typeof MiniCart !== 'undefined') {
-              MiniCart.refresh();
-            }
-          });
-        }
-
-        // Smooth scroll to product categories with animation
-        const scrollButton = document.querySelector('.scroll-to-categories');
-        const productCategories = document.getElementById('product-categories');
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Smooth scroll to product categories with animation
+    const scrollButton = document.querySelector('.scroll-to-categories');
+    const productCategories = document.getElementById('product-categories');
+    
+    if (scrollButton && productCategories) {
+      scrollButton.addEventListener('click', (e) => {
+        e.preventDefault();
         
-        if (scrollButton && productCategories) {
-          scrollButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Scroll to the section
-            productCategories.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'start'
-            });
-            
-            // Add animation class after scroll
-            setTimeout(() => {
-              productCategories.classList.add('animate');
-            }, 500);
-          });
-        }
+        // Scroll to the section
+        productCategories.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+        
+        // Add animation class after scroll
+        setTimeout(() => {
+          productCategories.classList.add('animate');
+        }, 500);
+      });
+    }
 
-        // Trigger animation on page load if already at the section
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('animate');
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.2 });
-
-        if (productCategories) {
-          observer.observe(productCategories);
+    // Trigger animation on page load if already at the section
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate');
+          observer.unobserve(entry.target);
         }
       });
-    </script>
-</body>
-</html>
+    }, { threshold: 0.2 });
+
+    if (productCategories) {
+      observer.observe(productCategories);
+    }
+  });
+</script>
+{% endblock %}

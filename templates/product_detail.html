@@ -1,238 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ product.name }} - Cruzy Coffee Co.</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body class="site-bg text-dark d-flex flex-column min-vh-100">
-    
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light site-nav shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='img/coffee_logo.png') }}" alt="Cruzy Coffee Co." height="40" class="me-2">
-                <span>Cruzy Coffee Co.</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navmenu">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    <li class="nav-item dropdown px-3">
-                        <a class="nav-link dropdown-toggle" href="#" id="machinesDropdown" role="button" data-bs-toggle="dropdown">
-                            Shop Machines
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='semi-auto') }}">Semi-Automatic</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='pod') }}">Pod Machines</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('machines', category='fully-auto') }}">Fully Automatic</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('beans') }}">Shop Beans</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('accessories') }}">Shop Accessories</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
-                    </li>
-                </ul>
+{% extends "base.html" %}
 
-                <ul class="navbar-nav ms-auto">
-                    {% if session.user_role in ['admin', 'manager'] %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                                {% if session.user_role == 'manager' %}Manager Tools{% else %}Admin Tools{% endif %}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='add') }}">Add Product</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='edit') }}">Edit Products</a></li>
-                                {% if session.user_role == 'manager' %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">Manage Staff</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                    {% endif %}
+{% block title %}{{ product.name }} - Cruzy Coffee Co.{% endblock %}
 
-                    {% if session.user_id %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
-                                {{ session.user_name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('account') }}">My Account</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
-                        </li>
-                    {% endif %}
-
-                    <li class="nav-item dropdown">
-                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
-                            <span id="mini-cart-count" class="badge bg-dark ms-1">0</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end mini-cart-menu" aria-labelledby="cartDropdown">
-                            <div id="mini-cart-content" class="mini-cart--dark">
-                                <div class="mini-cart-header d-flex justify-content-between align-items-center">
-                                    <strong>Cart</strong>
-                                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
-                                </div>
-                                <div class="mini-cart-body mt-2">
-                                    <div class="mini-cart-empty">Your cart is empty.</div>
-                                </div>
-                                <div class="mt-3 d-grid gap-2">
-                                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-dark btn-sm">View Cart</a>
-                                    <a href="{{ url_for('checkout') }}" class="btn btn-dark btn-sm">Checkout</a>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-6">
+            {% if product.image %}
+            <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                 alt="{{ product.name }}" 
+                 class="img-fluid rounded shadow">
+            {% else %}
+            <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                 alt="{{ product.name }}" 
+                 class="img-fluid rounded shadow">
+            {% endif %}
         </div>
-    </nav>
+        <div class="col-md-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item">
+                        {% if product.category == 'machines' %}
+                            <a href="{{ url_for('machines', category=product.subcategory) }}">
+                                {{ product.subcategory|replace('-', ' ')|title }}
+                            </a>
+                        {% elif product.category == 'beans' %}
+                            <a href="{{ url_for('beans') }}">Beans</a>
+                        {% elif product.category == 'accessories' %}
+                            <a href="{{ url_for('accessories') }}">Accessories</a>
+                        {% else %}
+                            <a href="{{ url_for('index') }}">Products</a>
+                        {% endif %}
+                    </li>
+                    <li class="breadcrumb-item active">{{ product.name }}</li>
+                </ol>
+            </nav>
 
-    <!-- Product Detail -->
-    <section class="container py-5">
-        <div class="row">
-            <!-- Product Image -->
-            <div class="col-md-6 mb-4">
-                {% if product.image %}
-                <img src="{{ url_for('static', filename='img/' + product.image) }}" 
-                     class="img-fluid rounded shadow" 
-                     alt="{{ product.name }}">
-                {% else %}
-                <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
-                     class="img-fluid rounded shadow" 
-                     alt="{{ product.name }}">
-                {% endif %}
+            <h1 class="mb-3">{{ product.name }}</h1>
+            
+            {% if session.user_role in ['admin', 'manager'] %}
+            <p class="text-muted">
+                <strong>SKU:</strong> {{ product.sku }} | 
+                <span class="badge bg-secondary">Stock: {{ product.stock }}</span>
+            </p>
+            {% endif %}
+
+            <h2 class="text-primary mb-4">${{ '%.2f'|format(product.price) }}</h2>
+
+            {% if product.description %}
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ product.description }}</p>
             </div>
+            {% endif %}
 
-            <!-- Product Info -->
-            <div class="col-md-6">
-                <h1 class="display-5 fw-bold mb-3">{{ product.name }}</h1>
-                
-                {% if session.user_role in ['admin', 'manager'] %}
-                <div class="mb-3">
-                    <span class="badge bg-secondary">SKU: {{ product.sku }}</span>
-                    <span class="badge bg-info">Stock: {{ product.stock }}</span>
-                    <a href="{{ url_for('manage_product', action='edit', sku=product.sku) }}" 
-                       class="badge bg-warning text-dark">
-                        ✏️ Edit Product
-                    </a>
-                </div>
-                {% endif %}
-
-                {% if product.brand %}
-                <p class="text-muted mb-2"><strong>Brand:</strong> {{ product.brand }}</p>
-                {% endif %}
-
-                {% if product.category %}
-                <p class="text-muted mb-2">
-                    <strong>Category:</strong> 
-                    <span class="badge bg-dark">{{ product.category }}</span>
-                    {% if product.subcategory %}
-                    <span class="badge bg-secondary">{{ product.subcategory }}</span>
-                    {% endif %}
-                </p>
-                {% endif %}
-
-                <h2 class="text-primary mb-4">${{ '%.2f'|format(product.price) }}</h2>
-
-                {% if product.description %}
-                <div class="mb-4">
-                    <h5>Description</h5>
-                    <p class="lead">{{ product.description }}</p>
-                </div>
-                {% endif %}
-
-                <!-- Add to Cart -->
-                <div class="d-grid gap-2 mb-3">
-                    {% if product.stock and product.stock > 0 %}
-                    <button class="btn btn-dark btn-lg add-to-cart-btn" 
-                            data-product-id="{{ product.id }}">
-                        🛒 Add to Cart
-                    </button>
-                    {% else %}
-                    <button class="btn btn-secondary btn-lg" disabled>
-                        Out of Stock
-                    </button>
-                    {% endif %}
-                    
-                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
-                        ← Back to Shopping
-                    </a>
-                </div>
-
-                <!-- Stock Status -->
-                {% if product.stock %}
-                    {% if product.stock > 10 %}
-                    <p class="text-success"><strong>✓ In Stock</strong></p>
-                    {% elif product.stock > 0 %}
-                    <p class="text-warning"><strong>⚠️ Only {{ product.stock }} left in stock</strong></p>
-                    {% else %}
-                    <p class="text-danger"><strong>✗ Out of Stock</strong></p>
-                    {% endif %}
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Related Products -->
-        {% if related_products %}
-        <hr class="my-5">
-        <h3 class="mb-4">You May Also Like</h3>
-        <div class="row g-4">
-            {% for related in related_products %}
-            <div class="col-md-3">
-                <div class="card product-card h-100">
-                    {% if related.image %}
-                    <img src="{{ url_for('static', filename='img/' + related.image) }}" 
-                         class="card-img-top" 
-                         alt="{{ related.name }}">
-                    {% else %}
-                    <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
-                         class="card-img-top" 
-                         alt="{{ related.name }}">
-                    {% endif %}
-                    <div class="card-body d-flex flex-column">
-                        <h6 class="card-title">{{ related.name }}</h6>
-                        <p class="fw-bold mt-auto mb-2">${{ '%.2f'|format(related.price) }}</p>
-                        <a href="{{ url_for('product_detail', product_id=related.id) }}" 
-                           class="btn btn-sm btn-outline-dark">
-                            View Product
-                        </a>
+            {% if product.stock and product.stock > 0 %}
+            <div class="mb-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-auto">
+                        <label for="quantity-{{ product.id }}" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity-{{ product.id }}" 
+                               value="1" min="1" max="{{ product.stock }}" style="width: 100px;">
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" 
+                                class="btn btn-dark btn-lg" 
+                                onclick="addToCartDetail({{ product.id }})">
+                            <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                        </button>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </section>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Out of Stock</strong> - This item is currently unavailable.
+            </div>
+            {% endif %}
 
-    <!-- Footer -->
-    <footer class="site-footer mt-auto py-3">
-        <div class="container text-center text-muted small">
-            &copy; {{ year }} Cruzy Coffee Co. All rights reserved.
-        </div>
-    </footer>
+            {% if session.user_role in ['admin', 'manager'] %}
+            <div class="mt-4 pt-4 border-top">
+                <h5>Admin Actions</h5>
+                <a href="{{ url_for('edit_product') }}?sku={{ product.sku }}" 
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil-square me-1"></i>Edit Product
+                </a>
+                <form method="post" action="{{ url_for('delete_product', sku=product.sku) }}" 
+                      class="d-inline" 
+                      onsubmit="return confirm('Are you sure you want to delete this product?');">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Delete Product
+                    </button>
+                </form>
+            </div>
+            {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-</body>
-</html>
+            <div class="mt-4">
+                {% if product.category == 'machines' %}
+                    <a href="{{ url_for('machines', category=product.subcategory) }}" class="btn btn-outline-dark">
+                        <i class="bi bi-arrow-left me-1"></i>Back to {{ product.subcategory|replace('-', ' ')|title }}
+                    </a>
+                {% elif product.category == 'beans' %}
+                    <a href="{{ url_for('beans') }}" class="btn btn-outline-dark">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Beans
+                    </a>
+                {% elif product.category == 'accessories' %}
+                    <a href="{{ url_for('accessories') }}" class="btn btn-outline-dark">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Accessories
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-house-door me-1"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- No additional JavaScript needed - cart.js handles everything -->
+{% endblock %}

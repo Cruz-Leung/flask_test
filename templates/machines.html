@@ -1,197 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - Cruzy Coffee Co.</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body class="site-bg text-dark d-flex flex-column min-vh-100">
-    
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light site-nav shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='img/coffee_logo.png') }}" alt="Cruzy Coffee Co." height="40" class="me-2">
-                <span>Cruzy Coffee Co.</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navmenu">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    <li class="nav-item dropdown px-3">
-                        <a class="nav-link dropdown-toggle active" href="#" id="machinesDropdown" role="button" data-bs-toggle="dropdown">
-                            Shop Machines
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item {% if category == 'semi-auto' %}active{% endif %}" href="{{ url_for('machines', category='semi-auto') }}">Semi-Automatic</a></li>
-                            <li><a class="dropdown-item {% if category == 'pod' %}active{% endif %}" href="{{ url_for('machines', category='pod') }}">Pod Machines</a></li>
-                            <li><a class="dropdown-item {% if category == 'fully-auto' %}active{% endif %}" href="{{ url_for('machines', category='fully-auto') }}">Fully Automatic</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('beans') }}">Shop Beans</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('accessories') }}">Shop Accessories</a>
-                    </li>
-                    <li class="nav-item px-3">
-                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
-                    </li>
-                </ul>
+{% extends "base.html" %}
 
-                <ul class="navbar-nav ms-auto">
-                    {% if session.user_role in ['admin', 'manager'] %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                                {% if session.user_role == 'manager' %}Manager Tools{% else %}Admin Tools{% endif %}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='add') }}">Add Product</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('manage_product', action='edit') }}">Edit Products</a></li>
-                                {% if session.user_role == 'manager' %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">Manage Staff</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                    {% endif %}
+{% block title %}{{ title }} - Cruzy Coffee Co.{% endblock %}
 
-                    {% if session.user_id %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown">
-                                {{ session.user_name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('account') }}">My Account</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
-                        </li>
-                    {% endif %}
-
-                    <li class="nav-item dropdown">
-                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ url_for('static', filename='img/cart.png') }}" alt="Cart" style="height: 24px; width: 24px;">
-                            <span id="mini-cart-count" class="badge bg-dark ms-1">0</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end mini-cart-menu" aria-labelledby="cartDropdown">
-                            <div id="mini-cart-content" class="mini-cart--dark">
-                                <div class="mini-cart-header d-flex justify-content-between align-items-center">
-                                    <strong>Cart</strong>
-                                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
-                                </div>
-                                <div class="mini-cart-body mt-2">
-                                    <div class="mini-cart-empty">Your cart is empty.</div>
-                                </div>
-                                <div class="mt-3 d-grid gap-2">
-                                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-dark btn-sm">View Cart</a>
-                                    <a href="{{ url_for('checkout') }}" class="btn btn-dark btn-sm">Checkout</a>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-promo" style="background: url('{{ url_for('static', filename='img/coffee-hero.jpg') }}') center/cover; min-height: 40vh; position: relative;">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="container text-center text-white py-5">
+            <h1 class="display-3 fw-bold mb-3">{{ title }}</h1>
+            <p class="lead">Discover our premium selection of coffee machines</p>
         </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
     </nav>
 
-    <!-- Page Header -->
-    <section class="py-5 text-center">
-        <div class="container">
-            <h1 class="display-4 fw-bold">{{ title }}</h1>
-            <p class="lead text-muted">Professional espresso machines for your home</p>
-        </div>
-    </section>
-
-    <!-- Products Grid -->
-    <section class="container pb-5">
-        {% if products %}
-        <div class="row g-4">
-            {% for product in products %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card product-card h-100">
+    {% if products %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for product in products %}
+        <div class="col">
+            <div class="card product-card h-100">
+                <!-- Product Image -->
+                <div style="position: relative;">
                     {% if product.image %}
-                    <img src="{{ url_for('static', filename='img/' + product.image) }}" class="card-img-top" alt="{{ product.name }}">
+                    <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                         class="card-img-top" 
+                         alt="{{ product.name }}">
                     {% else %}
-                    <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" class="card-img-top" alt="{{ product.name }}">
+                    <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                         class="card-img-top" 
+                         alt="{{ product.name }}">
                     {% endif %}
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ product.name }}</h5>
-                        
-                        {% if session.user_role in ['admin', 'manager'] %}
-                        <p class="text-muted small mb-1">
-                            <strong>SKU:</strong> {{ product.sku }}
-                            <span class="badge bg-secondary">Stock: {{ product.stock }}</span>
+                    
+                    <!-- Stock Badge -->
+                    {% if product.stock <= 0 %}
+                    <span class="position-absolute top-0 end-0 m-3 badge bg-danger">Out of Stock</span>
+                    {% elif product.stock < 5 %}
+                    <span class="position-absolute top-0 end-0 m-3 badge bg-warning text-dark">Low Stock</span>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body d-flex flex-column">
+                    <!-- Product Name -->
+                    <h5 class="card-title fw-bold mb-2">{{ product.name }}</h5>
+                    
+                    <!-- Product Description -->
+                    {% if product.description %}
+                    <p class="card-text text-muted small mb-3">
+                        {{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Admin Info -->
+                    {% if session.user_role in ['admin', 'manager'] %}
+                    <div class="mb-3 p-2 rounded" style="background-color: #f8f9fa; border-left: 3px solid var(--brand-gold);">
+                        <p class="small mb-0">
+                            <strong>SKU:</strong> {{ product.sku }}<br>
+                            <strong>Stock:</strong> 
+                            <span class="badge {% if product.stock > 10 %}bg-success{% elif product.stock > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ product.stock }} units
+                            </span>
                         </p>
-                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Price -->
+                    <div class="mt-auto">
+                        <p class="h4 mb-3 text-dark">${{ '%.2f'|format(product.price) }}</p>
                         
-                        {% if product.description %}
-                        <p class="card-text text-muted small">{{ product.description }}</p>
-                        {% endif %}
-                        <div class="mt-auto">
-                            <p class="fw-bold fs-5 mb-2">${{ '%.2f'|format(product.price) }}</p>
-                            <div class="d-grid gap-2">
-                                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-dark">View Product</a>
-                                {% if product.stock and product.stock > 0 %}
-                                <button class="btn btn-dark add-to-cart-btn" data-product-id="{{ product.id }}">
-                                    Add to Cart
-                                </button>
-                                {% else %}
-                                <button class="btn btn-secondary" disabled>Out of Stock</button>
-                                {% endif %}
-                            </div>
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                               class="btn btn-outline-dark">
+                                <i class="bi bi-eye me-1"></i>View Details
+                            </a>
+                            
+                            {% if product.stock and product.stock > 0 %}
+                            <button type="button" 
+                                    class="btn btn-modern"
+                                    onclick="addToCart({{ product.id }})">
+                                <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                            </button>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="bi bi-x-circle me-1"></i>Out of Stock
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <div class="text-center py-5">
-            <p class="lead text-muted">No products found in this category.</p>
-        </div>
-        {% endif %}
-    </section>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No products found in this category.
+    </div>
+    {% endif %}
+    
+    <!-- Back Button -->
+    <div class="mt-5 text-center">
+        <a href="{{ url_for('index') }}" class="btn btn-modern btn-lg">
+            <i class="bi bi-arrow-left-circle me-2"></i>Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}
 
-    <!-- Footer -->
-    <footer class="site-footer mt-auto py-3">
-        <div class="container text-center text-muted small">
-            &copy; {{ year }} Cruzy Coffee Co. All rights reserved.
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-
-    <!-- DEBUG SCRIPT - Remove after testing -->
-    <script>
-      console.log('Page loaded!');
-      console.log('Cart object:', typeof Cart);
-      console.log('MiniCart object:', typeof MiniCart);
-      
-      // Test if cart.js loaded
-      document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM loaded');
-        const buttons = document.querySelectorAll('.add-to-cart-btn');
-        console.log('Found', buttons.length, 'add-to-cart buttons');
-        
-        buttons.forEach(button => {
-          console.log('Button product ID:', button.getAttribute('data-product-id'));
-        });
-      });
-    </script>
-</body>
-</html>
+{% block extra_js %}
+<!-- DEBUG SCRIPT - Remove after testing -->
+<script>
+  console.log('Machines page loaded!');
+  console.log('Cart object:', typeof Cart);
+  console.log('MiniCart object:', typeof MiniCart);
+  
+  // Test if cart.js loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded on machines page');
+    const buttons = document.querySelectorAll('.add-to-cart-btn');
+    console.log('Found', buttons.length, 'add-to-cart buttons');
+    
+    buttons.forEach(button => {
+      console.log('Button product ID:', button.getAttribute('data-product-id'));
+    });
+  });
+</script>
+{% endblock %}

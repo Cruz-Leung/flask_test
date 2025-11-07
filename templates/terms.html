@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions - Cruzy Coffee Co.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="mb-4">Terms and Conditions</h1>
+            <p class="text-muted mb-4"><strong>Last updated:</strong> November 6, 2025</p>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <p>Welcome to Cruzy Coffee Co. These Terms and Conditions outline the rules and regulations for the use of our website, located at [yourwebsite.com], and govern all purchases and interactions with our online store.</p>
+                <p>By accessing or purchasing from Cruzy Coffee Co., you agree to be bound by these Terms. Please read them carefully before using our site or placing an order.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>1. General Information</h3>
+                <p>Cruzy Coffee Co. is an Australian-based retailer that resells coffee-related products, including coffee machines, coffee beans, and accessories. All prices are listed in AUD (Australian Dollars) and include GST unless otherwise stated.</p>
+                <p>We reserve the right to update or change these Terms at any time without prior notice. Any new features or products added to the site will also be subject to these Terms.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>2. Eligibility</h3>
+                <p>By using our website, you confirm that you are at least 18 years old or have permission from a parent or guardian to make a purchase.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>3. Product Information</h3>
+                <p>We strive to ensure all product descriptions, images, and prices are accurate. However, Cruzy Coffee Co. does not guarantee that product information is error-free, complete, or current.</p>
+                <ul>
+                    <li>Colours and packaging may appear differently due to monitor settings or manufacturer changes.</li>
+                    <li>Product availability is subject to stock levels and supplier updates.</li>
+                    <li>We reserve the right to limit the quantities of any products we offer.</li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>4. Pricing and Payment</h3>
+                <p>All payments must be made at the time of purchase. We accept major payment methods including credit/debit cards, PayPal, and other options listed at checkout.</p>
+                <p>Prices may change without notice. Any discounts or promotions are subject to their own terms and can be withdrawn at any time.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>5. Shipping and Delivery</h3>
+                <ul>
+                    <li>We offer shipping within Australia (and internationally where available).</li>
+                    <li>Estimated delivery times are provided as a guide only and may vary due to courier delays or external factors.</li>
+                    <li>You are responsible for providing an accurate shipping address. We are not liable for lost items due to incorrect details.</li>
+                    <li>Risk of loss passes to you once the order has been shipped.</li>
+                </ul>
+                <p>For more details, please refer to our Shipping Policy (if available).</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>6. Returns and Refunds</h3>
+                <p>If you are not satisfied with your purchase, you may be eligible for a return or exchange subject to the following conditions:</p>
+                <ul>
+                    <li>Items must be unused, in original packaging, and returned within 14 days of delivery.</li>
+                    <li>Food items (such as coffee beans) cannot be returned due to hygiene and safety reasons unless faulty.</li>
+                    <li>Refunds will be issued to the original payment method once the item is inspected.</li>
+                </ul>
+                <p>Please see our Returns Policy for full details.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>7. Warranties and Repairs</h3>
+                <ul>
+                    <li>Certain products (such as coffee machines and grinders) may come with manufacturer warranties. Warranty claims should be made directly with the manufacturer unless otherwise stated.</li>
+                    <li>Cruzy Coffee Co. does not provide additional warranties beyond those required under Australian Consumer Law.</li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>8. Limitation of Liability</h3>
+                <p>To the maximum extent permitted by law, Cruzy Coffee Co. shall not be liable for any indirect, incidental, or consequential damages arising from your use of our website or products.</p>
+                <p>Our total liability for any claim shall not exceed the total amount paid by you for the purchase in question.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>9. Intellectual Property</h3>
+                <p>All content on this website — including logos, product images, text, and design — is the property of Cruzy Coffee Co. or its suppliers and protected under copyright law. You may not reproduce, distribute, or use our materials without prior written consent.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>10. Privacy</h3>
+                <p>We respect your privacy and handle your personal information in accordance with our Privacy Policy. By using our website, you consent to the collection and use of your information as described there.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>11. User Accounts</h3>
+                <p>When creating an account with us, you must provide accurate and complete information. You are responsible for maintaining the confidentiality of your login credentials and for all activities under your account.</p>
+                <p>We reserve the right to suspend or terminate accounts at our discretion if we suspect fraud or misuse.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>12. Governing Law</h3>
+                <p>These Terms are governed by and construed in accordance with the laws of Victoria, Australia. Any disputes will be handled in the courts of Victoria.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3>13. Contact Information</h3>
+                <p>If you have any questions or concerns regarding these Terms, please contact us:</p>
+                <p>
+                    📧 <a href="mailto:support@cruzycoffeeco.com.au">support@cruzycoffeeco.com.au</a><br>
+                    🌐 <a href="http://www.cruzycoffeeco.com.au">www.cruzycoffeeco.com.au</a>
+                </p>
+            </div>
+
+            <div class="mt-4">
+                <a href="{{ url_for('checkout') }}" class="btn btn-outline-secondary">← Back to Checkout</a>
+                <a href="{{ url_for('index') }}" class="btn btn-brown">Go to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
