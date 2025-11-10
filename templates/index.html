@@ -3,14 +3,74 @@
 {% block title %}Home - Cruzy Coffee Co.{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero text-center text-white d-flex align-items-center"
-         style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}'); min-height:75vh; background-position:center; background-size:cover;">
-    <div class="container py-6">
-        <h1 class="display-4 fw-bold">Discover exceptional coffee</h1>
-        <p class="lead mb-4">Specialty beans, premium machines and crafted accessories.</p>
-        <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
+<!-- Multi-Slide Hero Carousel -->
+<section class="hero-carousel">
+    <div class="hero-slides">
+        <!-- Slide 1 -->
+        <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="container text-center text-white">
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Discover exceptional coffee</h1>
+                    <p class="lead mb-4 hero-subtitle">Specialty beans, premium machines and crafted accessories.</p>
+                    <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="container text-center text-white">
+                    <span class="badge bg-warning text-dark mb-3 hero-badge">Limited Offer</span>
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Barista Express — 20% Off</h1>
+                    <p class="lead mb-4 hero-subtitle">Professional-grade espresso at home. Free shipping this week.</p>
+                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-light btn-lg">Shop Machines</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/bean_home.jpg') }}');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="container text-center text-white">
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Premium Coffee Beans</h1>
+                    <p class="lead mb-4 hero-subtitle">Single origin & signature blends roasted to perfection.</p>
+                    <a href="{{ url_for('beans') }}" class="btn btn-outline-light btn-lg">Browse Beans</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/promo_membership.jpg') }}');">
+            <div class="hero-overlay hero-overlay-light"></div>
+            <div class="hero-content">
+                <div class="container text-center">
+                    <h1 class="display-3 fw-bold mb-3 hero-title text-dark">Join Cruzy Membership</h1>
+                    <p class="lead mb-4 hero-subtitle text-dark">Exclusive discounts, early access & free shipping.</p>
+                    <a href="{{ url_for('about') }}" class="btn btn-dark btn-lg">Become a Member</a>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Navigation Dots -->
+    <div class="hero-dots">
+        <span class="hero-dot active" data-slide="0"></span>
+        <span class="hero-dot" data-slide="1"></span>
+        <span class="hero-dot" data-slide="2"></span>
+        <span class="hero-dot" data-slide="3"></span>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <button class="hero-arrow hero-arrow-prev" aria-label="Previous slide">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+    <button class="hero-arrow hero-arrow-next" aria-label="Next slide">
+        <i class="bi bi-chevron-right"></i>
+    </button>
 </section>
 
 <!-- Promotional cards -->
@@ -57,7 +117,9 @@
                 <div class="card-body">
                     <h5 class="card-title">Coffee Machines</h5>
                     <p class="card-text text-muted">Home and prosumer espresso machines.</p>
-                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-brown">View Machines</a>
+                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-modern">
+                        View Machines <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -67,7 +129,9 @@
                 <div class="card-body">
                     <h5 class="card-title">Coffee Beans</h5>
                     <p class="card-text text-muted">Single origin & signature blends.</p>
-                    <a href="{{ url_for('beans') }}" class="btn btn-brown">Browse Beans</a>
+                    <a href="{{ url_for('beans') }}" class="btn btn-modern">
+                        Browse Beans <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -77,7 +141,9 @@
                 <div class="card-body">
                     <h5 class="card-title">Accessories</h5>
                     <p class="card-text text-muted">Grinders, tampers, cups & more.</p>
-                    <a href="{{ url_for('accessories') }}" class="btn btn-brown">See Accessories</a>
+                    <a href="{{ url_for('accessories') }}" class="btn btn-modern">
+                        See Accessories <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -87,41 +153,104 @@
 
 {% block extra_js %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Smooth scroll to product categories with animation
+document.addEventListener('DOMContentLoaded', () => {
+    // Hero Carousel
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots = document.querySelectorAll('.hero-dot');
+    const prevBtn = document.querySelector('.hero-arrow-prev');
+    const nextBtn = document.querySelector('.hero-arrow-next');
+    let currentSlide = 0;
+    let autoplayInterval;
+
+    function showSlide(index) {
+        // Remove active class from all slides and dots
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        // Add active class to current slide and dot
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+    }
+
+    function prevSlide() {
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(currentSlide);
+    }
+
+    function startAutoplay() {
+        autoplayInterval = setInterval(nextSlide, 7000); // 7 seconds
+    }
+
+    function stopAutoplay() {
+        clearInterval(autoplayInterval);
+    }
+
+    // Dot navigation
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            currentSlide = index;
+            showSlide(currentSlide);
+            stopAutoplay();
+            startAutoplay(); // Restart autoplay
+        });
+    });
+
+    // Arrow navigation
+    prevBtn.addEventListener('click', () => {
+        prevSlide();
+        stopAutoplay();
+        startAutoplay();
+    });
+
+    nextBtn.addEventListener('click', () => {
+        nextSlide();
+        stopAutoplay();
+        startAutoplay();
+    });
+
+    // Pause on hover
+    const heroCarousel = document.querySelector('.hero-carousel');
+    heroCarousel.addEventListener('mouseenter', stopAutoplay);
+    heroCarousel.addEventListener('mouseleave', startAutoplay);
+
+    // Start autoplay
+    startAutoplay();
+
+    // Smooth scroll to product categories
     const scrollButton = document.querySelector('.scroll-to-categories');
     const productCategories = document.getElementById('product-categories');
     
     if (scrollButton && productCategories) {
-      scrollButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Scroll to the section
-        productCategories.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
+        scrollButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            productCategories.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            setTimeout(() => {
+                productCategories.classList.add('animate');
+            }, 500);
         });
-        
-        // Add animation class after scroll
-        setTimeout(() => {
-          productCategories.classList.add('animate');
-        }, 500);
-      });
     }
 
-    // Trigger animation on page load if already at the section
+    // Intersection Observer for product categories
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate');
-          observer.unobserve(entry.target);
-        }
-      });
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate');
+                observer.unobserve(entry.target);
+            }
+        });
     }, { threshold: 0.2 });
 
     if (productCategories) {
-      observer.observe(productCategories);
+        observer.observe(productCategories);
     }
-  });
+});
 </script>
 {% endblock %}

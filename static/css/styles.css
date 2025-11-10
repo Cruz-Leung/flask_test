@@ -306,6 +306,7 @@ body.site-bg {
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     animation: fadeIn 0.2s ease;
+    z-index: 1050 !important;
 }
 
 @keyframes fadeIn {
@@ -905,4 +906,514 @@ body.site-bg {
     .brand-text {
         gap: 0.35rem; /* Slightly less gap on mobile */
     }
+}
+
+/* Fix for dropdown menu appearing behind other elements */
+.dropdown-menu {
+    z-index: 1050 !important;
+}
+
+/* Ensure navbar dropdowns are on top */
+.navbar .dropdown-menu {
+    z-index: 1050 !important;
+}
+
+/* Mini cart dropdown specifically */
+.navbar .dropdown-menu.mini-cart-menu {
+    z-index: 1050 !important;
+}
+
+/* All Bootstrap dropdowns */
+.dropdown-menu.show {
+    z-index: 1050 !important;
+}
+
+/* Mega dropdown menu */
+.dropdown-menu-mega {
+    z-index: 1050 !important;
+}
+
+/* Ensure dropdowns are above cards, forms, and modals */
+.card {
+    z-index: 1 !important;
+    position: relative;
+}
+
+/* Fix for edit product page specifically */
+.edit-product-form {
+    z-index: 1 !important;
+    position: relative;
+}
+
+/* ===========================
+   HERO CAROUSEL STYLING
+=========================== */
+
+.hero-carousel {
+    position: relative;
+    width: 100%;
+    height: 75vh;
+    min-height: 600px;
+    overflow: hidden;
+}
+
+.hero-slides {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+}
+
+.hero-slide.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+}
+
+/* Blue Bottle style image fade-in effect */
+.hero-slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    background-size: cover;
+    background-position: center;
+    filter: blur(20px);
+    opacity: 1;
+    transition: opacity 2s ease-out, filter 2s ease-out;
+    z-index: 0;
+}
+
+.hero-slide.active::before {
+    opacity: 0;
+    filter: blur(0);
+}
+
+/* Overlay */
+.hero-slide .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(26,26,26,0.3), rgba(26,26,26,0.6));
+    z-index: 1;
+}
+
+.hero-slide .hero-overlay-light {
+    background: linear-gradient(180deg, rgba(245,240,230,0.2), rgba(245,240,230,0.5));
+}
+
+/* Content */
+.hero-slide .hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+/* Text animations */
+.hero-slide .hero-title,
+.hero-slide .hero-subtitle,
+.hero-slide .hero-badge,
+.hero-slide .btn {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.hero-slide.active .hero-title {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.3s;
+}
+
+.hero-slide.active .hero-subtitle {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+}
+
+.hero-slide.active .hero-badge {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.2s;
+}
+
+.hero-slide.active .btn {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.7s;
+}
+
+/* Navigation Dots */
+.hero-dots {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+}
+
+.hero-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.hero-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+}
+
+.hero-dot.active {
+    background: #fff;
+    width: 32px;
+    border-radius: 6px;
+}
+
+/* Navigation Arrows */
+.hero-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.hero-arrow:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.hero-arrow-prev {
+    left: 30px;
+}
+
+.hero-arrow-next {
+    right: 30px;
+}
+
+.hero-arrow i {
+    font-size: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-carousel {
+        height: 60vh;
+        min-height: 500px;
+    }
+
+    .hero-slide .hero-title {
+        font-size: 2rem !important;
+    }
+
+    .hero-slide .hero-subtitle {
+        font-size: 1rem !important;
+    }
+
+    .hero-arrow {
+        width: 40px;
+        height: 40px;
+    }
+
+    .hero-arrow-prev {
+        left: 15px;
+    }
+
+    .hero-arrow-next {
+        right: 15px;
+    }
+
+    .hero-dots {
+        bottom: 20px;
+    }
+}
+
+/* Product categories fade-in animation */
+.product-categories {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.product-categories.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.product-categories .col-md-4 {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.product-categories.animate .col-md-4:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.1s;
+}
+
+.product-categories.animate .col-md-4:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.3s;
+}
+
+.product-categories.animate .col-md-4:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+}
+
+/* ===========================
+   PRODUCT CATEGORY CARDS - ENHANCED
+=========================== */
+
+.product-categories .product-card {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 1rem;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+}
+
+.product-categories .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.05) 0%, rgba(139, 69, 19, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.product-categories .product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+.product-categories .product-card:hover::before {
+    opacity: 1;
+}
+
+/* Card image enhancements */
+.product-categories .product-card .card-img-top {
+    height: 280px;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 1rem 1rem 0 0;
+}
+
+.product-categories .product-card:hover .card-img-top {
+    transform: scale(1.08);
+}
+
+/* Card body */
+.product-categories .product-card .card-body {
+    position: relative;
+    z-index: 2;
+    padding: 1.75rem;
+    transition: padding 0.3s ease;
+}
+
+.product-categories .product-card:hover .card-body {
+    padding: 2rem 1.75rem;
+}
+
+/* Card title */
+.product-categories .product-card .card-title {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--brand-black);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.product-categories .product-card:hover .card-title {
+    color: var(--brand-brown);
+    transform: translateX(4px);
+}
+
+/* Card text */
+.product-categories .product-card .card-text {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    transition: color 0.3s ease;
+}
+
+.product-categories .product-card:hover .card-text {
+    color: #555;
+}
+
+/* Button microinteractions */
+.product-categories .btn-modern {
+    background: var(--brand-black);
+    color: var(--brand-light);
+    border: 2px solid var(--brand-black);
+    padding: 0.75rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.product-categories .btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--brand-brown);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+    z-index: -1;
+}
+
+.product-categories .btn-modern:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.3);
+    color: white;
+    border-color: var(--brand-brown);
+}
+
+.product-categories .btn-modern:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.product-categories .btn-modern:active {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 10px rgba(139, 69, 19, 0.2);
+}
+
+/* Icon animation on hover */
+.product-categories .btn-modern i {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.product-categories .btn-modern:hover i {
+    transform: translateX(4px);
+}
+
+/* Stagger animation for cards */
+.product-categories .col-md-4 {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-categories.animate .col-md-4:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.15s;
+}
+
+.product-categories.animate .col-md-4:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.3s;
+}
+
+.product-categories.animate .col-md-4:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.45s;
+}
+
+/* Add shine effect on hover */
+.product-categories .product-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 70%
+    );
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    transition: transform 0.6s ease;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.product-categories .product-card:hover::after {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .product-categories .product-card .card-img-top {
+        height: 220px;
+    }
+    
+    .product-categories .product-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .product-categories .btn-modern {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Add subtle border glow on hover */
+.product-categories .product-card {
+    border: 2px solid transparent;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.4s ease;
+}
+
+.product-categories .product-card:hover {
+    border-color: rgba(212, 165, 116, 0.3);
 }
