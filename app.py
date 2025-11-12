@@ -26,7 +26,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 STATIC_IMG_DIR = Path(__file__).parent / "static" / "img"
 STATIC_DIR = Path(__file__).parent / 'static'
 STATIC_JS_DIR = STATIC_DIR / 'js'
-ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "gif", "avif"} 
+ALLOWED_EXT = {"png", "jpeg", "webp", "gif", "avif"} 
 
 # Verify static folder exists
 STATIC_JS_DIR.mkdir(parents=True, exist_ok=True)
@@ -94,6 +94,27 @@ def manager_required(f):
 
 
 # ===========================
+# CONTEXT PROCESSOR
+# ===========================
+
+@app.context_processor
+def utility_processor():
+    """Make utility functions available to all templates"""
+    def get_breville_id():
+        """Get the product ID for Breville Barista Express (M-BRE003)"""
+        conn = get_db_connection()
+        product = conn.execute("""
+            SELECT id FROM products 
+            WHERE sku = 'M-BRE003'
+            LIMIT 1
+        """).fetchone()
+        conn.close()
+        return product['id'] if product else 1  # Fallback to ID 1 if not found
+    
+    return dict(get_breville_id=get_breville_id)
+
+
+# ===========================
 # PUBLIC ROUTES
 # ===========================
 
@@ -103,32 +124,71 @@ def index():
 
 @app.route("/machines/<category>")
 def machines(category):
+    """Display coffee machines by category"""
     conn = get_db_connection()
-    products = conn.execute('''
-        SELECT * FROM products 
-        WHERE category = "machines" 
-        AND subcategory = ? 
-        ORDER BY brand, name
-    ''', (category,)).fetchall()
+    
+    # Validate category
+    valid_categories = ['semi-auto', 'fully-auto', 'pod']
+    if category not in valid_categories:
+        abort(404)
+    
+    products = conn.execute(
+        "SELECT * FROM products WHERE category = ? ORDER BY name",
+        (category,)
+    ).fetchall()
     conn.close()
-
-    categories = {
+    
+    category_titles = {
         'semi-auto': 'Semi-Automatic Machines',
-        'pod': 'Pod Machines',
-        'fully-auto': 'Fully Automatic Machines'
+        'fully-auto': 'Fully Automatic Machines',
+        'pod': 'Pod Machines'
     }
     
     return render_template(
         "machines.html",
         products=products,
         category=category,
-        title=categories.get(category),
+        title=category_titles.get(category, 'Coffee Machines'),
         year=datetime.now().year
     )
 
 @app.route("/beans")
-def beans():
-    return render_template("beans.html", year=datetime.now().year)
+@app.route("/beans/<subcategory>")
+def beans(subcategory=None):
+    """Display coffee beans with subcategory filtering"""
+    conn = get_db_connection()
+    
+    # If subcategory is provided, filter by it
+    if subcategory:
+        products = conn.execute('''
+            SELECT * FROM products 
+            WHERE category = "beans" 
+            AND subcategory = ? 
+            ORDER BY name
+        ''', (subcategory,)).fetchall()
+    else:
+        # Show all beans products
+        products = conn.execute('''
+            SELECT * FROM products 
+            WHERE category = "beans" 
+            ORDER BY subcategory, name
+        ''').fetchall()
+    
+    conn.close()
+    
+    subcategories = {
+        'coffee-beans': 'Coffee Beans',
+        'ground-coffee': 'Ground Coffee'
+    }
+    
+    return render_template(
+        "beans.html",
+        products=products,
+        subcategory=subcategory,
+        subcategories=subcategories,
+        title=subcategories.get(subcategory, 'All Coffee Beans'),
+        year=datetime.now().year
+    )
 
 @app.route("/accessories")
 def accessories():
@@ -371,6 +431,15 @@ def cart_add(product_id):
         if product['stock'] < quantity:
             return jsonify({'success': False, 'message': f'Only {product["stock"]} items available'}), 400
         
+        # Calculate discounted price
+        original_price = product['price']
+        discount_percentage = product['discount_percentage'] if product['discount_percentage'] else 0
+        
+        if discount_percentage > 0:
+            final_price = original_price * (1 - discount_percentage / 100)
+        else:
+            final_price = original_price
+        
         # Initialize cart if it doesn't exist
         if 'cart' not in session:
             session['cart'] = {}
@@ -384,7 +453,10 @@ def cart_add(product_id):
         else:
             session['cart'][cart_key] = {
                 'product_id': product_id,
-                'quantity': quantity
+                'quantity': quantity,
+                'price': final_price,  # Store the final discounted price
+                'original_price': original_price,
+                'discount_percentage': discount_percentage
             }
         
         # Mark session as modified
@@ -465,12 +537,15 @@ def cart_mini():
                 
                 product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
                 if product:
-                    subtotal = product['price'] * quantity
+                    # Use stored price from cart (which is already discounted)
+                    price = item_data.get('price', product['price'])
+                    subtotal = price * quantity
+                    
                     cart_items.append({
                         'cart_key': cart_key,
                         'product_id': product_id,
                         'name': product['name'],
-                        'price': product['price'],
+                        'price': price,
                         'quantity': quantity,
                         'subtotal': subtotal,
                         'image': product['image']
@@ -504,12 +579,17 @@ def view_cart():
             
             product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
             if product:
-                item_subtotal = product['price'] * quantity
+                # Use stored price from cart (which is already discounted)
+                price = item_data.get('price', product['price'])
+                item_subtotal = price * quantity
+                
                 cart_items.append({
                     'product_id': product_id,
                     'sku': product['sku'],
                     'name': product['name'],
-                    'price': product['price'],
+                    'price': price,  # Use discounted price
+                    'original_price': item_data.get('original_price', product['price']),
+                    'discount_percentage': item_data.get('discount_percentage', 0),
                     'quantity': quantity,
                     'subtotal': item_subtotal,
                     'image': product['image'],
@@ -518,10 +598,37 @@ def view_cart():
                 subtotal += item_subtotal
         conn.close()
     
-    # Calculate tax and shipping
+    # Dynamic Shipping Calculation Algorithm
+    FREE_SHIPPING_THRESHOLD = 80.00
+    
+    if subtotal >= FREE_SHIPPING_THRESHOLD:
+        shipping = 0  # FREE shipping
+        shipping_message = "FREE Shipping!"
+    elif subtotal == 0:
+        shipping = 0
+        shipping_message = "Add items to calculate shipping"
+    else:
+        # Dynamic shipping based on cart value
+        # Base rate: $15
+        # Reduced as cart value increases
+        # Formula: Base rate - (discount based on how close to threshold)
+        BASE_SHIPPING = 15.00
+        DISCOUNT_RATE = 0.05  # 5% discount per $10 towards threshold
+        
+        # Calculate how much customer needs to reach free shipping
+        amount_to_free_shipping = FREE_SHIPPING_THRESHOLD - subtotal
+        
+        # Calculate discount based on cart value
+        discount_factor = subtotal / FREE_SHIPPING_THRESHOLD
+        shipping_discount = BASE_SHIPPING * discount_factor * 0.3  # Max 30% discount on shipping
+        
+        shipping = max(BASE_SHIPPING - shipping_discount, 8.00)  # Minimum $8 shipping
+        shipping = round(shipping, 2)
+        shipping_message = f"${amount_to_free_shipping:.2f} away from FREE shipping!"
+    
+    # Calculate GST and total
     tax_rate = 0.10
     tax = subtotal * tax_rate
-    shipping = 15.00 if subtotal < 100 and subtotal > 0 else 0
     total = subtotal + tax + shipping
     
     return render_template('cart.html',
@@ -529,14 +636,13 @@ def view_cart():
                          subtotal=subtotal,
                          tax=tax,
                          shipping=shipping,
+                         shipping_message=shipping_message,
+                         free_shipping_threshold=FREE_SHIPPING_THRESHOLD,
                          total=total,
                          year=datetime.now().year)
 
 
-# ===========================
-# CHECKOUT & ORDERS
-# ===========================
-
+# Update the checkout route (around line 650)
 @app.route("/checkout")
 def checkout():
     """Display checkout form"""
@@ -557,11 +663,16 @@ def checkout():
         
         product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
         if product:
-            item_subtotal = product['price'] * quantity
+            # Use stored price from cart (which is already discounted)
+            price = item_data.get('price', product['price'])
+            item_subtotal = price * quantity
+            
             cart_items.append({
                 'sku': product['sku'],
                 'name': product['name'],
-                'price': product['price'],
+                'price': price,  # Use discounted price
+                'original_price': item_data.get('original_price', product['price']),
+                'discount_percentage': item_data.get('discount_percentage', 0),
                 'quantity': quantity,
                 'subtotal': item_subtotal,
                 'image': product['image']
@@ -570,10 +681,24 @@ def checkout():
     
     conn.close()
     
-    # Calculate tax and shipping
+    # Dynamic Shipping Calculation Algorithm
+    FREE_SHIPPING_THRESHOLD = 80.00
+    
+    if subtotal >= FREE_SHIPPING_THRESHOLD:
+        shipping = 0
+        shipping_message = "FREE Shipping!"
+    else:
+        BASE_SHIPPING = 15.00
+        discount_factor = subtotal / FREE_SHIPPING_THRESHOLD
+        shipping_discount = BASE_SHIPPING * discount_factor * 0.3
+        shipping = max(BASE_SHIPPING - shipping_discount, 8.00)
+        shipping = round(shipping, 2)
+        amount_to_free_shipping = FREE_SHIPPING_THRESHOLD - subtotal
+        shipping_message = f"${amount_to_free_shipping:.2f} away from FREE shipping!"
+    
+    # Calculate GST and total
     tax_rate = 0.10
     tax = subtotal * tax_rate
-    shipping = 15.00 if subtotal < 100 else 0
     total = subtotal + tax + shipping
     
     # Get user info if logged in
@@ -593,11 +718,14 @@ def checkout():
                          subtotal=subtotal,
                          tax=tax,
                          shipping=shipping,
+                         shipping_message=shipping_message,
+                         free_shipping_threshold=FREE_SHIPPING_THRESHOLD,
                          total=total,
                          user_info=user_info,
                          year=datetime.now().year)
 
 
+# Update the place_order route (around line 720)
 @app.route("/place-order", methods=['POST'])
 def place_order():
     """Process the order and save to database"""
@@ -641,20 +769,34 @@ def place_order():
                     conn.close()
                     return redirect(url_for('checkout'))
                 
-                item_subtotal = product['price'] * quantity
+                # USE THE STORED DISCOUNTED PRICE FROM CART
+                price = item_data.get('price', product['price'])
+                item_subtotal = price * quantity
+                
                 order_items.append({
                     'sku': product['sku'],
                     'name': product['name'],
-                    'price': product['price'],
+                    'price': price,  # This is the discounted price
                     'quantity': quantity,
                     'subtotal': item_subtotal
                 })
                 subtotal += item_subtotal
         
-        # Calculate tax and shipping
+        # Dynamic Shipping Calculation Algorithm
+        FREE_SHIPPING_THRESHOLD = 80.00
+        
+        if subtotal >= FREE_SHIPPING_THRESHOLD:
+            shipping_cost = 0
+        else:
+            BASE_SHIPPING = 15.00
+            discount_factor = subtotal / FREE_SHIPPING_THRESHOLD
+            shipping_discount = BASE_SHIPPING * discount_factor * 0.3
+            shipping_cost = max(BASE_SHIPPING - shipping_discount, 8.00)
+            shipping_cost = round(shipping_cost, 2)
+        
+        # Calculate GST and total
         tax_rate = 0.10
         tax = subtotal * tax_rate
-        shipping_cost = 15.00 if subtotal < 100 else 0
         total = subtotal + tax + shipping_cost
         
         # Generate unique order number
@@ -761,6 +903,11 @@ def my_orders():
                          year=datetime.now().year)
 
 
+@app.route("/membership")
+def membership():
+    return render_template("member.html", year=datetime.now().year)
+
+
 # ===========================
 # ADMIN ROUTES - Products
 # ===========================
@@ -776,6 +923,7 @@ def add_product():
         price = request.form.get('price')
         stock = request.form.get('stock')
         description = request.form.get('description')
+        discount_percentage = request.form.get('discount_percentage', 0)
 
         image = request.files.get('image')
         image_filename = None
@@ -788,9 +936,9 @@ def add_product():
         conn = get_db_connection()
         try:
             conn.execute("""
-                INSERT INTO products (sku, name, category, subcategory, price, stock, description, image)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (sku, name, category, subcategory, price, stock, description, image_filename))
+                INSERT INTO products (sku, name, category, subcategory, price, stock, description, image, discount_percentage)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (sku, name, category, subcategory, price, stock, description, image_filename, discount_percentage))
             conn.commit()
             flash("✅ New product added successfully!", "success")
             conn.close()
@@ -824,6 +972,7 @@ def edit_product():
         price = request.form.get('price')
         description = request.form.get('description')
         stock = request.form.get('stock')
+        discount_percentage = request.form.get('discount_percentage', 0)
 
         sku_changed = old_sku != new_sku and session.get('user_role') == 'manager'
 
@@ -851,15 +1000,15 @@ def edit_product():
             if image_filename:
                 conn.execute("""
                     UPDATE products
-                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, image = ?
+                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, image = ?, discount_percentage = ?
                     WHERE sku = ?
-                """, (new_sku, name, category, subcategory, price, description, stock, image_filename, old_sku))
+                """, (new_sku, name, category, subcategory, price, description, stock, image_filename, discount_percentage, old_sku))
             else:
                 conn.execute("""
                     UPDATE products
-                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?
+                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, discount_percentage = ?
                     WHERE sku = ?
-                """, (new_sku, name, category, subcategory, price, description, stock, old_sku))
+                """, (new_sku, name, category, subcategory, price, description, stock, discount_percentage, old_sku))
             conn.commit()
             flash("✅ Product updated successfully.", "success")
             sku = new_sku
@@ -930,7 +1079,7 @@ def delete_product(sku):
 
 
 # ===========================
-# ADMIN ROUTES - Orders
+# ADMIN ROUTES - ORDERS
 # ===========================
 
 @app.route("/admin/orders")
@@ -1233,6 +1382,98 @@ def init_orders_db():
     
     conn.close()
 
+def add_discount_column():
+    """Add discount column to products table if it doesn't exist"""
+    conn = get_db_connection()
+    try:
+        # Check if discount column exists
+        cursor = conn.execute("PRAGMA table_info(products)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        if 'discount_percentage' not in columns:
+            conn.execute('''
+                ALTER TABLE products 
+                ADD COLUMN discount_percentage INTEGER DEFAULT 0
+            ''')
+            conn.commit()
+            print("✅ Discount column added to products table")
+        else:
+            print("ℹ️  Discount column already exists")
+    except Exception as e:
+        print(f"Error adding discount column: {e}")
+    finally:
+        conn.close()
+
+def set_product_discount():
+    """Set 10% discount ONLY on Breville Barista Express (M-BRE003)"""
+    conn = get_db_connection()
+    try:
+        # First, clear ALL discounts
+        conn.execute('UPDATE products SET discount_percentage = 0')
+        conn.commit()
+        print("✅ All discounts cleared")
+        
+        # Then set discount ONLY on Breville Barista Express with SKU M-BRE003
+        conn.execute('''
+            UPDATE products 
+            SET discount_percentage = 10 
+            WHERE sku = 'M-BRE003'
+        ''')
+        conn.commit()
+        
+        # Verify which products have discounts
+        discounted = conn.execute('''
+            SELECT id, name, sku, price, discount_percentage 
+            FROM products 
+            WHERE discount_percentage > 0
+        ''').fetchall()
+        
+        if discounted:
+            for product in discounted:
+                original_price = product['price']
+                discounted_price = original_price * (1 - product['discount_percentage'] / 100)
+                print(f"✅ Discount applied to: {product['name']}")
+                print(f"   ID: {product['id']}, SKU: {product['sku']}")
+                print(f"   Original Price: ${original_price:.2f}")
+                print(f"   Discounted Price: ${discounted_price:.2f} ({product['discount_percentage']}% off)")
+        else:
+            print("⚠️  Product with SKU M-BRE003 not found in database")
+            
+    except Exception as e:
+        print(f"❌ Error setting discount: {e}")
+    finally:
+        conn.close()
+
+
+def add_beans_subcategories():
+    """Update existing beans products with subcategories"""
+    conn = get_db_connection()
+    try:
+        # Check if any beans products exist without subcategories
+        beans = conn.execute('''
+            SELECT id, name FROM products 
+            WHERE category = 'beans' AND (subcategory IS NULL OR subcategory = '')
+        ''').fetchall()
+        
+        if beans:
+            print(f"Found {len(beans)} beans products without subcategories")
+            # You can manually categorize them or set a default
+            # For now, set them all to 'coffee-beans' as default
+            conn.execute('''
+                UPDATE products 
+                SET subcategory = 'coffee-beans' 
+                WHERE category = 'beans' AND (subcategory IS NULL OR subcategory = '')
+            ''')
+            conn.commit()
+            print("✅ Updated beans products with default subcategory 'coffee-beans'")
+        else:
+            print("ℹ️  All beans products already have subcategories")
+            
+    except Exception as e:
+        print(f"❌ Error updating beans subcategories: {e}")
+    finally:
+        conn.close()
+
 
 # ===========================
 # ERROR HANDLERS
@@ -1251,11 +1492,10 @@ def internal_error(e):
     return render_template('error.html', error_code=500, error_message="Internal Server Error", year=datetime.now().year), 500
 
 
-# ===========================
-# RUN APP
-# ===========================
-
 if __name__ == "__main__":
     init_db()
     init_orders_db()
+    add_discount_column()
+    set_product_discount()
+    add_beans_subcategories()
     app.run(debug=True)

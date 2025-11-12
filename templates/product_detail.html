@@ -4,119 +4,274 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row">
-        <div class="col-md-6">
-            {% if product.image %}
-            <img src="{{ url_for('static', filename='img/' + product.image) }}" 
-                 alt="{{ product.name }}" 
-                 class="img-fluid rounded shadow">
-            {% else %}
-            <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
-                 alt="{{ product.name }}" 
-                 class="img-fluid rounded shadow">
-            {% endif %}
-        </div>
-        <div class="col-md-6">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
-                    <li class="breadcrumb-item">
-                        {% if product.category == 'machines' %}
-                            <a href="{{ url_for('machines', category=product.subcategory) }}">
-                                {{ product.subcategory|replace('-', ' ')|title }}
-                            </a>
-                        {% elif product.category == 'beans' %}
-                            <a href="{{ url_for('beans') }}">Beans</a>
-                        {% elif product.category == 'accessories' %}
-                            <a href="{{ url_for('accessories') }}">Accessories</a>
-                        {% else %}
-                            <a href="{{ url_for('index') }}">Products</a>
-                        {% endif %}
-                    </li>
-                    <li class="breadcrumb-item active">{{ product.name }}</li>
-                </ol>
-            </nav>
-
-            <h1 class="mb-3">{{ product.name }}</h1>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
             
-            {% if session.user_role in ['admin', 'manager'] %}
-            <p class="text-muted">
-                <strong>SKU:</strong> {{ product.sku }} | 
-                <span class="badge bg-secondary">Stock: {{ product.stock }}</span>
-            </p>
+            {% if product.category == 'beans' %}
+                <li class="breadcrumb-item"><a href="{{ url_for('beans') }}">Coffee Beans</a></li>
+                {% if product.subcategory %}
+                    <li class="breadcrumb-item"><a href="{{ url_for('beans', subcategory=product.subcategory) }}">{{ product.subcategory|replace('-', ' ')|title }}</a></li>
+                {% endif %}
+            {% elif product.category == 'accessories' %}
+                <li class="breadcrumb-item"><a href="{{ url_for('accessories') }}">Accessories</a></li>
+            {% elif product.category in ['semi-auto', 'fully-auto', 'pod'] %}
+                <li class="breadcrumb-item"><a href="{{ url_for('machines', category='semi-auto') }}">Machines</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('machines', category=product.category) }}">{{ product.category|replace('-', ' ')|title }}</a></li>
             {% endif %}
+            
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
 
-            <h2 class="text-primary mb-4">${{ '%.2f'|format(product.price) }}</h2>
-
-            {% if product.description %}
-            <div class="mb-4">
-                <h5>Description</h5>
-                <p>{{ product.description }}</p>
+    <div class="row g-5">
+        <!-- Product Image -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                     class="card-img-top" 
+                     alt="{{ product.name }}"
+                     style="border-radius: 1rem; max-height: 500px; object-fit: cover;">
+                {% else %}
+                <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                     class="card-img-top" 
+                     alt="{{ product.name }}"
+                     style="border-radius: 1rem; max-height: 500px; object-fit: cover;">
+                {% endif %}
             </div>
-            {% endif %}
+        </div>
 
-            {% if product.stock and product.stock > 0 %}
-            <div class="mb-3">
-                <div class="row g-3 align-items-end">
-                    <div class="col-auto">
-                        <label for="quantity-{{ product.id }}" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity-{{ product.id }}" 
-                               value="1" min="1" max="{{ product.stock }}" style="width: 100px;">
+        <!-- Product Details -->
+        <div class="col-lg-6">
+            <div class="product-detail-info">
+                <!-- Promotional Badge for products with discount -->
+                {% if product.discount_percentage and product.discount_percentage > 0 %}
+                <span class="badge bg-warning text-dark mb-3" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                    <i class="bi bi-tag-fill me-1"></i>Limited Time Offer
+                </span>
+                {% endif %}
+
+                <h1 class="display-5 fw-bold mb-3">{{ product.name }}</h1>
+                
+                <!-- Price Section with Promotion -->
+                <div class="mb-4">
+                    {% if product.discount_percentage and product.discount_percentage > 0 %}
+                    <!-- Discounted pricing -->
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="text-decoration-line-through text-muted" style="font-size: 1.5rem;">
+                            ${{ '%.2f'|format(product.price) }}
+                        </span>
+                        <span class="h2 text-success mb-0 fw-bold">
+                            ${{ '%.2f'|format(product.price * (1 - product.discount_percentage / 100)) }}
+                        </span>
+                        <span class="badge bg-success" style="font-size: 1rem; padding: 0.5rem 0.75rem;">
+                            {{ product.discount_percentage }}% OFF
+                        </span>
                     </div>
-                    <div class="col-auto">
-                        <button type="button" 
-                                class="btn btn-dark btn-lg" 
-                                onclick="addToCartDetail({{ product.id }})">
-                            <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-clock-history me-1"></i>
+                        Save ${{ '%.2f'|format(product.price * product.discount_percentage / 100) }} • Offer ends soon
+                    </p>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>GST not included in price
+                    </p>
+                    {% else %}
+                    <!-- Regular pricing -->
+                    <p class="h2 text-dark mb-2">${{ '%.2f'|format(product.price) }}</p>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>GST not included in price
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- SKU and Stock -->
+                <div class="mb-4">
+                    <p class="text-muted mb-1">
+                        <strong>SKU:</strong> {{ product.sku }}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Availability:</strong>
+                        {% if product.stock > 10 %}
+                        <span class="badge bg-success">In Stock ({{ product.stock }} available)</span>
+                        {% elif product.stock > 0 %}
+                        <span class="badge bg-warning text-dark">Low Stock ({{ product.stock }} left)</span>
+                        {% else %}
+                        <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <h5 class="fw-bold mb-3">Description</h5>
+                    <p class="text-muted" style="line-height: 1.8;">
+                        {{ product.description if product.description else 'No description available.' }}
+                    </p>
+                </div>
+
+                <!-- Quantity Selector and Add to Cart -->
+                {% if product.stock > 0 %}
+                <div class="mb-4">
+                    <label for="quantity-{{ product.id }}" class="form-label fw-bold">Quantity:</label>
+                    <div class="input-group mb-3" style="max-width: 150px;">
+                        <button class="btn btn-outline-secondary" type="button" 
+                                onclick="changeQuantity({{ product.id }}, -1)">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <input type="number" 
+                               class="form-control text-center" 
+                               id="quantity-{{ product.id }}" 
+                               value="1" 
+                               min="1" 
+                               max="{{ product.stock }}"
+                               readonly>
+                        <button class="btn btn-outline-secondary" type="button" 
+                                onclick="changeQuantity({{ product.id }}, 1)">
+                            <i class="bi bi-plus"></i>
                         </button>
                     </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Out of Stock</strong> - This item is currently unavailable.
-            </div>
-            {% endif %}
 
-            {% if session.user_role in ['admin', 'manager'] %}
-            <div class="mt-4 pt-4 border-top">
-                <h5>Admin Actions</h5>
-                <a href="{{ url_for('edit_product') }}?sku={{ product.sku }}" 
-                   class="btn btn-outline-primary">
-                    <i class="bi bi-pencil-square me-1"></i>Edit Product
-                </a>
-                <form method="post" action="{{ url_for('delete_product', sku=product.sku) }}" 
-                      class="d-inline" 
-                      onsubmit="return confirm('Are you sure you want to delete this product?');">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="bi bi-trash me-1"></i>Delete Product
+                <div class="d-grid gap-2">
+                    <button type="button" 
+                            class="btn btn-dark btn-lg"
+                            onclick="addToCartDetail({{ product.id }})">
+                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
                     </button>
-                </form>
-            </div>
-            {% endif %}
-
-            <div class="mt-4">
-                {% if product.category == 'machines' %}
-                    <a href="{{ url_for('machines', category=product.subcategory) }}" class="btn btn-outline-dark">
-                        <i class="bi bi-arrow-left me-1"></i>Back to {{ product.subcategory|replace('-', ' ')|title }}
-                    </a>
-                {% elif product.category == 'beans' %}
-                    <a href="{{ url_for('beans') }}" class="btn btn-outline-dark">
-                        <i class="bi bi-arrow-left me-1"></i>Back to Beans
-                    </a>
-                {% elif product.category == 'accessories' %}
-                    <a href="{{ url_for('accessories') }}" class="btn btn-outline-dark">
-                        <i class="bi bi-arrow-left me-1"></i>Back to Accessories
-                    </a>
+                    
+                    {% if product.discount_percentage and product.discount_percentage > 0 %}
+                    <div class="alert alert-info mb-0" role="alert">
+                        <i class="bi bi-truck me-2"></i>
+                        <strong>Free Shipping</strong> on this item this week only!
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This product is currently out of stock.
+                </div>
                 {% endif %}
-                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-house-door me-1"></i>Back to Home
-                </a>
+
+                <!-- Additional Info -->
+                <div class="mt-4 pt-4 border-top">
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-shield-check me-2"></i>Secure checkout guaranteed
+                    </p>
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-arrow-return-left me-2"></i>30-day return policy
+                    </p>
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-award me-2"></i>Official warranty included
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Customers Also Like Section -->
+    {% if related_products %}
+    <section class="customers-also-like mt-5 pt-5">
+        <div class="section-header mb-4">
+            <h3 class="fw-bold">Customers Also Like</h3>
+            <p class="text-muted">Similar products you might be interested in</p>
+        </div>
+
+        <div class="row g-4">
+            {% for related in related_products %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card recommendation-card h-100">
+                    <a href="{{ url_for('product_detail', product_id=related.id) }}" class="text-decoration-none">
+                        {% if related.image %}
+                        <img src="{{ url_for('static', filename='img/' + related.image) }}" 
+                             class="card-img-top" 
+                             alt="{{ related.name }}">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                             class="card-img-top" 
+                             alt="{{ related.name }}">
+                        {% endif %}
+                        
+                        <div class="card-body">
+                            <h6 class="card-title text-dark">{{ related.name }}</h6>
+                            
+                            <div class="price-section mb-3">
+                                {% if related.discount_percentage and related.discount_percentage > 0 %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-decoration-line-through text-muted small">
+                                        ${{ '%.2f'|format(related.price) }}
+                                    </span>
+                                    <span class="fw-bold text-success">
+                                        ${{ '%.2f'|format(related.price * (1 - related.discount_percentage / 100)) }}
+                                    </span>
+                                </div>
+                                <span class="badge bg-success badge-sm mt-1">
+                                    {{ related.discount_percentage }}% OFF
+                                </span>
+                                {% else %}
+                                <p class="fw-bold mb-0">${{ '%.2f'|format(related.price) }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-grid">
+                                <span class="btn btn-outline-dark btn-sm">
+                                    View Details <i class="bi bi-arrow-right ms-1"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="mt-5">
+        {% if product.category in ['semi-auto', 'fully-auto', 'pod'] %}
+            <a href="{{ url_for('machines', category=product.category) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to {{ product.category|replace('-', ' ')|title }} Machines
+            </a>
+        {% elif product.category == 'beans' %}
+            {% if product.subcategory %}
+                <a href="{{ url_for('beans', subcategory=product.subcategory) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to {{ product.subcategory|replace('-', ' ')|title }}
+                </a>
+            {% else %}
+                <a href="{{ url_for('beans') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Roastery
+                </a>
+            {% endif %}
+        {% elif product.category == 'accessories' %}
+            <a href="{{ url_for('accessories') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Accessories
+            </a>
+        {% else %}
+            <a href="{{ url_for('index') }}#product-categories" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Shop
+            </a>
+        {% endif %}
+    </div>
 </div>
+
+<script>
+function changeQuantity(productId, change) {
+    const input = document.getElementById(`quantity-${productId}`);
+    const currentValue = parseInt(input.value);
+    const newValue = currentValue + change;
+    const max = parseInt(input.max);
+    const min = parseInt(input.min);
+    
+    if (newValue >= min && newValue <= max) {
+        input.value = newValue;
+    }
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}

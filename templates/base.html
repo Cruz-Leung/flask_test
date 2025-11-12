@@ -29,12 +29,11 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navmenu">
-                <!-- Main navigation links (centered) -->
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <!-- Home -->
                     <li class="nav-item nav-item-icon px-3">
-                        <a class="nav-link" href="{{ url_for('index') }}">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
                             <div class="nav-icon">
                                 <i class="bi bi-house-door"></i>
                             </div>
@@ -42,43 +41,53 @@
                         </a>
                     </li>
 
-                    <!-- Machines Mega Menu -->
+                    <!-- Machines Dropdown (MEGA DROPDOWN - RESTORED) -->
                     <li class="nav-item nav-item-icon dropdown dropdown-mega px-3">
                         <a class="nav-link dropdown-toggle" href="#" id="machinesDropdown" role="button" 
                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
                             <div class="nav-icon">
-                                <i class="bi bi-cup-hot"></i>
+                                <img src="{{ url_for('static', filename='img/machine_icon.png') }}" 
+                                     alt="Machines" 
+                                     class="nav-icon-img">
                             </div>
                             <span class="nav-text">Machines</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-mega">
                             <div class="container py-4">
                                 <div class="row g-4">
+                                    <!-- Semi-Automatic -->
                                     <div class="col-md-4">
                                         <a href="{{ url_for('machines', category='semi-auto') }}" class="dropdown-card">
                                             <div class="dropdown-card-img">
-                                                <i class="bi bi-gear-wide-connected dropdown-icon"></i>
+                                                <img src="{{ url_for('static', filename='img/semi_auto_dropdown.jpg') }}" 
+                                                     alt="Semi-Automatic Machines">
                                             </div>
                                             <h5>Semi-Automatic</h5>
-                                            <p class="text-muted small">Traditional espresso experience</p>
+                                            <p>Manual control, espresso artistry</p>
                                         </a>
                                     </div>
-                                    <div class="col-md-4">
-                                        <a href="{{ url_for('machines', category='pod') }}" class="dropdown-card">
-                                            <div class="dropdown-card-img">
-                                                <i class="bi bi-square-fill dropdown-icon"></i>
-                                            </div>
-                                            <h5>Pod Machines</h5>
-                                            <p class="text-muted small">Quick & convenient brewing</p>
-                                        </a>
-                                    </div>
+                                    
+                                    <!-- Fully Automatic -->
                                     <div class="col-md-4">
                                         <a href="{{ url_for('machines', category='fully-auto') }}" class="dropdown-card">
                                             <div class="dropdown-card-img">
-                                                <i class="bi bi-robot dropdown-icon"></i>
+                                                <img src="{{ url_for('static', filename='img/fully_auto_dropdown.jpg') }}" 
+                                                     alt="Fully Automatic Machines">
                                             </div>
                                             <h5>Fully Automatic</h5>
-                                            <p class="text-muted small">Premium one-touch coffee</p>
+                                            <p>One-touch convenience</p>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Pod Machines -->
+                                    <div class="col-md-4">
+                                        <a href="{{ url_for('machines', category='pod') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/pod_dropdown.jpg') }}" 
+                                                     alt="Pod Machines">
+                                            </div>
+                                            <h5>Pod Machines</h5>
+                                            <p>Quick & easy capsule system</p>
                                         </a>
                                     </div>
                                 </div>
@@ -86,21 +95,53 @@
                         </div>
                     </li>
 
-                    <!-- Beans -->
-                    <li class="nav-item nav-item-icon px-3">
-                        <a class="nav-link" href="{{ url_for('beans') }}">
+                    <!-- Beans Dropdown (MEGA DROPDOWN - SAME AS MACHINES) -->
+                    <li class="nav-item nav-item-icon dropdown dropdown-mega px-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="beansDropdown" role="button" 
+                           data-bs-toggle="dropdown" data-bs-auto-close="outside">
                             <div class="nav-icon">
-                                <i class="bi bi-box-seam"></i>
+                                <img src="{{ url_for('static', filename='img/bean_icon.png') }}" 
+                                     alt="Roastery" 
+                                     class="nav-icon-img">
                             </div>
-                            <span class="nav-text">Beans</span>
+                            <span class="nav-text">Roastery</span>
                         </a>
+                        <div class="dropdown-menu dropdown-menu-mega">
+                            <div class="container py-4">
+                                <div class="row g-4">
+                                    <!-- Coffee Beans -->
+                                    <div class="col-md-6">
+                                        <a href="{{ url_for('beans', subcategory='coffee-beans') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/coffee_beans_dropdown.jpg') }}" 
+                                                     alt="Coffee Beans">
+                                            </div>
+                                            <h5>Coffee Beans</h5>
+                                            <p>Whole bean coffee for grinding fresh</p>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Ground Coffee -->
+                                    <div class="col-md-6">
+                                        <a href="{{ url_for('beans', subcategory='ground-coffee') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/ground_coffee_dropdown.jpg') }}" 
+                                                     alt="Ground Coffee">
+                                            </div>
+                                            <h5>Ground Coffee</h5>
+                                            <p>Pre-ground for convenience</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </li>
 
                     <!-- Accessories -->
                     <li class="nav-item nav-item-icon px-3">
-                        <a class="nav-link" href="{{ url_for('accessories') }}">
+                        <a class="nav-link {% if request.endpoint == 'accessories' %}active{% endif %}" href="{{ url_for('accessories') }}">
                             <div class="nav-icon">
-                                <i class="bi bi-gear"></i>
+                                <i class="bi bi-tools"></i>
                             </div>
                             <span class="nav-text">Accessories</span>
                         </a>
@@ -108,7 +149,7 @@
 
                     <!-- About -->
                     <li class="nav-item nav-item-icon px-3">
-                        <a class="nav-link" href="{{ url_for('about') }}">
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">
                             <div class="nav-icon">
                                 <i class="bi bi-info-circle"></i>
                             </div>
@@ -205,6 +246,19 @@
             </div>
         </div>
     </nav>
+
+    <!-- FREE SHIPPING PROMO BANNER -->
+    <div class="promo-banner bg-success text-white py-2">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col text-center">
+                    <i class="bi bi-truck me-2"></i>
+                    <strong>FREE SHIPPING</strong> on orders over <strong>$80</strong>
+                    <span class="ms-2"></span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}

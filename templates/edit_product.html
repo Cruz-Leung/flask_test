@@ -181,6 +181,19 @@
                             <input type="file" class="form-control form-control-sm" id="image" name="image" accept="image/*">
                         </div>
 
+                        <div class="mb-3">
+                            <label for="discount_percentage" class="form-label">Discount (%)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="discount_percentage" 
+                                   name="discount_percentage" 
+                                   min="0" 
+                                   max="100"
+                                   value="{{ product.discount_percentage if product else 0 }}"
+                                   placeholder="0">
+                            <small class="text-muted">Enter 0 for no discount, 10 for 10% off, etc.</small>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-sm">
                                 <i class="bi bi-save"></i> Save Changes

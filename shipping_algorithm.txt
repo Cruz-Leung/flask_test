@@ -1,0 +1,25 @@
+FREE_SHIPPING_THRESHOLD = $80
+
+IF subtotal >= $80:
+    shipping = $0 (FREE)
+    
+ELSE IF subtotal == $0:
+    shipping = $0
+    
+ELSE:
+    BASE_SHIPPING = $15
+    
+    # Calculate discount factor (0 to 1)
+    discount_factor = subtotal / $80
+    
+    # Calculate shipping discount (max 30% off base rate)
+    shipping_discount = $15 × discount_factor × 0.3
+    
+    # Final shipping (minimum $8)
+    shipping = MAX($15 - shipping_discount, $8)
+
+EXAMPLES:
+- Cart $20:  shipping = $15 - ($15 × 0.25 × 0.3) = $13.88
+- Cart $40:  shipping = $15 - ($15 × 0.5 × 0.3) = $12.75
+- Cart $60:  shipping = $15 - ($15 × 0.75 × 0.3) = $11.63
+- Cart $80+: shipping = $0 (FREE)

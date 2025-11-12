@@ -160,13 +160,23 @@
                             <strong>${{ '%.2f'|format(subtotal) }}</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Tax (10%):</span>
+                            <span>GST (10%):</span>
                             <strong>${{ '%.2f'|format(tax) }}</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span>Shipping:</span>
-                            <strong class="text-success">{% if shipping == 0 %}FREE{% else %}${{ '%.2f'|format(shipping) }}{% endif %}</strong>
+                            <strong class="{% if shipping == 0 %}text-success{% else %}text-dark{% endif %}">
+                                {% if shipping == 0 %}FREE{% else %}${{ '%.2f'|format(shipping) }}{% endif %}
+                            </strong>
                         </div>
+                        
+                        {% if shipping > 0 and subtotal < free_shipping_threshold %}
+                        <div class="alert alert-info small mb-3" role="alert">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ shipping_message }}
+                        </div>
+                        {% endif %}
+                        
                         <hr>
                         <div class="d-flex justify-content-between mb-3">
                             <strong class="fs-5">Total:</strong>
@@ -189,11 +199,7 @@
                     
                     {% if shipping == 0 %}
                     <div class="alert alert-success mt-3 small" role="alert">
-                        <i class="bi bi-truck me-1"></i> Free shipping applied!
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info mt-3 small" role="alert">
-                        <i class="bi bi-truck me-1"></i> Free shipping on orders over $100
+                        <i class="bi bi-truck me-1"></i> FREE shipping applied! 🎉
                     </div>
                     {% endif %}
                 </div>

@@ -24,9 +24,10 @@
             <div class="hero-content">
                 <div class="container text-center text-white">
                     <span class="badge bg-warning text-dark mb-3 hero-badge">Limited Offer</span>
-                    <h1 class="display-3 fw-bold mb-3 hero-title">Barista Express — 20% Off</h1>
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Barista Express — 10% Off</h1>
                     <p class="lead mb-4 hero-subtitle">Professional-grade espresso at home. Free shipping this week.</p>
-                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-light btn-lg">Shop Machines</a>
+                    {% set breville_id = get_breville_id() %}
+                    <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="btn btn-light btn-lg">Learn More</a>
                 </div>
             </div>
         </div>
@@ -44,13 +45,13 @@
         </div>
 
         <!-- Slide 4 -->
-        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/promo_membership.jpg') }}');">
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');">
             <div class="hero-overlay hero-overlay-light"></div>
             <div class="hero-content">
                 <div class="container text-center">
-                    <h1 class="display-3 fw-bold mb-3 hero-title text-dark">Join Cruzy Membership</h1>
+                    <h1 class="display-3 fw-bold mb-3 hero-title text-dark">Member Benefits</h1>
                     <p class="lead mb-4 hero-subtitle text-dark">Exclusive discounts, early access & free shipping.</p>
-                    <a href="{{ url_for('about') }}" class="btn btn-dark btn-lg">Become a Member</a>
+                    <a href="{{ url_for('membership') }}" class="btn btn-dark btn-lg">Discover</a>
                 </div>
             </div>
         </div>
@@ -78,15 +79,16 @@
     <div class="row g-4 align-items-stretch">
         <!-- Left: On Sale machine -->
         <div class="col-12 col-lg-6">
-            <a href="{{ url_for('machines', category='semi-auto') }}" class="text-decoration-none">
+            {% set breville_id = get_breville_id() %}
+            <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="text-decoration-none">
                 <div class="position-relative rounded overflow-hidden hero-promo" 
                      style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}'); background-size:cover; background-position:center;">
                     <div class="hero-overlay"></div>
                     <div class="hero-content p-5">
                         <span class="badge bg-warning text-dark mb-3">On Sale</span>
-                        <h2 class="display-5 fw-bold text-white">Barista Express — 20% Off</h2>
+                        <h2 class="display-5 fw-bold text-white">Barista Express — 10% Off</h2>
                         <p class="lead text-white">Limited time — our most-loved semi-automatic machine. Free shipping this week.</p>
-                        <button class="btn btn-light btn-lg">Shop Machines</button>
+                        <button class="btn btn-light btn-lg">Learn More</button>
                     </div>
                 </div>
             </a>
@@ -94,13 +96,13 @@
 
         <!-- Right: Membership option -->
         <div class="col-12 col-lg-6">
-            <a href="{{ url_for('about') }}" class="text-decoration-none">
-                <div class="position-relative rounded overflow-hidden" style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/promo_membership.jpg') }}'); background-size:cover; background-position:center;">
+            <a href="{{ url_for('membership') }}" class="text-decoration-none">
+                <div class="position-relative rounded overflow-hidden" style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/membership.jpg') }}'); background-size:cover; background-position:center;">
                     <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(245,240,230,0.18), rgba(245,240,230,0.45));"></div>
                     <div style="position:relative; z-index:2; padding:3.5rem;">
-                        <h2 class="display-5 fw-bold" style="color:#1A1A1A;">Join Cruzy Membership</h2>
+                        <h2 class="display-5 fw-bold" style="color:#1A1A1A;">Member Benefits</h2>
                         <p class="lead" style="color:#333333;">Exclusive discounts, early access to limited releases and free shipping for members.</p>
-                        <button class="btn btn-dark btn-lg">Become a Member</button>
+                        <button class="btn btn-dark btn-lg">Discover</button>
                     </div>
                 </div>
             </a>
