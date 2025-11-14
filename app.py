@@ -132,10 +132,25 @@ def machines(category):
     if category not in valid_categories:
         abort(404)
     
-    products = conn.execute(
-        "SELECT * FROM products WHERE category = ? ORDER BY name",
-        (category,)
-    ).fetchall()
+    # Query all products to debug
+    all_products = conn.execute("SELECT id, sku, name, category, subcategory FROM products").fetchall()
+    print("\n=== DEBUG: All products in database ===")
+    for p in all_products:
+        print(f"ID: {p['id']}, Name: {p['name']}, Category: '{p['category']}', Subcategory: '{p['subcategory']}'")
+    
+    # Try multiple ways to find products
+    products = conn.execute("""
+        SELECT * FROM products 
+        WHERE category = ? 
+           OR subcategory = ?
+           OR (category = 'machines' AND subcategory = ?)
+        ORDER BY name
+    """, (category, category, category)).fetchall()
+    
+    print(f"\n=== DEBUG: Found {len(products)} products for category '{category}' ===")
+    for p in products:
+        print(f"  - {p['name']}")
+    
     conn.close()
     
     category_titles = {
@@ -192,7 +207,18 @@ def beans(subcategory=None):
 
 @app.route("/accessories")
 def accessories():
-    return render_template("accessories.html", year=datetime.now().year)
+    """Display coffee accessories"""
+    conn = get_db_connection()
+    products = conn.execute(
+        "SELECT * FROM products WHERE category = 'accessories' ORDER BY name"
+    ).fetchall()
+    conn.close()
+    
+    return render_template(
+        "accessories.html",
+        products=products,
+        year=datetime.now().year
+    )
 
 @app.route("/about")
 def about():
