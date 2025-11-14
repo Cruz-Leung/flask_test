@@ -1,5 +1,28 @@
 console.log('✅ cart.js loaded');
 
+// Mini Cart functionality
+const MiniCart = {
+    updateCartCount: async function() {
+        try {
+            const response = await fetch('/cart/count');
+            const data = await response.json();
+            
+            const cartBadge = document.getElementById('mini-cart-count');
+            if (cartBadge) {
+                const count = data.count || 0;
+                cartBadge.textContent = count;
+                console.log('Cart count updated to:', count);
+            }
+            
+            // Also reload the mini cart display
+            await loadMiniCart();
+            
+        } catch (error) {
+            console.error('Error updating cart count:', error);
+        }
+    }
+};
+
 // Add to cart (simple version for product cards)
 function addToCart(productId) {
     console.log('Adding product:', productId);
@@ -15,9 +38,8 @@ function addToCart(productId) {
     .then(data => {
         console.log('Response:', data);
         if (data.success) {
-            updateCartCount(data.cart_count);
+            MiniCart.updateCartCount();
             showToast('Success', 'Item added to cart!', 'success');
-            loadMiniCart();
         } else {
             showToast('Error', data.message || 'Failed to add item', 'danger');
         }
@@ -45,10 +67,9 @@ function addToCartDetail(productId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            updateCartCount(data.cart_count);
+            MiniCart.updateCartCount();
             showToast('Success', `${quantity} item(s) added to cart!`, 'success');
             quantityInput.value = 1;
-            loadMiniCart();
         } else {
             showToast('Error', data.message || 'Failed to add item', 'danger');
         }
@@ -86,40 +107,36 @@ function loadMiniCart() {
         if (data.items && data.items.length > 0) {
             let html = '<div class="mini-cart--dark">';
             html += '<div class="mini-cart-header d-flex justify-content-between align-items-center">';
-            html += '<strong>Cart</strong>';
+            html += '<strong>Cart (' + data.count + ')</strong>';
             html += '<button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector(\'#cartDropdown\').click()"></button>';
             html += '</div>';
             html += '<div class="mini-cart-body mt-2">';
+            html += '<ul class="list-unstyled mb-2" style="max-height: 260px; overflow-y: auto;">';
             
             data.items.forEach(item => {
                 html += `
-                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <li class="d-flex align-items-center py-2 border-bottom">
                         <img src="/static/img/${item.image || 'placeholder.jpg'}" 
                              alt="${item.name}" 
-                             class="rounded me-3" 
-                             style="width: 50px; height: 50px; object-fit: cover;">
+                             class="rounded me-2" 
+                             style="width: 46px; height: 46px; object-fit: cover;">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0 small">${item.name}</h6>
-                            <small class="text-muted">Qty: ${item.quantity} × $${item.price.toFixed(2)}</small>
+                            <div class="small fw-semibold">${item.name}</div>
+                            <div class="small">x${item.quantity} · $${item.price.toFixed(2)}</div>
                         </div>
-                        <div class="text-end">
-                            <strong>$${item.subtotal.toFixed(2)}</strong>
-                            <button class="btn btn-sm btn-link text-danger p-0 d-block" 
-                                    onclick="removeFromCart('${item.cart_key}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
+                        <button class="btn btn-sm btn-outline-dark ms-2" 
+                                onclick="removeFromCart('${item.cart_key}')" 
+                                title="Remove">×</button>
+                    </li>
                 `;
             });
             
-            html += '</div>';
-            html += `<div class="border-top pt-3 mt-2">
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Total:</strong>
-                            <strong class="text-success">$${data.total.toFixed(2)}</strong>
-                        </div>
+            html += '</ul>';
+            html += `<div class="d-flex justify-content-between fw-semibold">
+                        <span>Total</span>
+                        <span>$${data.total.toFixed(2)}</span>
                      </div>`;
+            html += '</div>';
             html += '<div class="mt-3 d-grid gap-2">';
             html += '<a href="/cart" class="btn btn-outline-dark btn-sm">View Cart</a>';
             html += '<a href="/checkout" class="btn btn-dark btn-sm">Checkout</a>';
@@ -131,7 +148,7 @@ function loadMiniCart() {
             cartContent.innerHTML = `
                 <div class="mini-cart--dark">
                     <div class="mini-cart-header d-flex justify-content-between align-items-center">
-                        <strong>Cart</strong>
+                        <strong>Cart (0)</strong>
                         <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
                     </div>
                     <div class="mini-cart-body mt-2">
@@ -205,14 +222,7 @@ function showToast(title, message, type) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, loading mini cart...');
     loadMiniCart();
-    
-    // Also update cart count immediately
-    fetch('/cart/mini')
-        .then(response => response.json())
-        .then(data => {
-            updateCartCount(data.count);
-        })
-        .catch(error => {
-            console.error('Error getting cart count:', error);
-        });
 });
+
+// Make MiniCart available globally
+window.MiniCart = MiniCart;

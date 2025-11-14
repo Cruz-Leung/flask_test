@@ -220,26 +220,19 @@
                         </li>
                     {% endif %}
 
-                    <!-- Cart dropdown with icon -->
+                    <!-- Shopping Cart with Mini Cart -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-cart3" style="font-size: 1.25rem;"></i>
-                            <span id="mini-cart-count" class="badge bg-dark ms-1">{{ cart_count or 0 }}</span>
+                        <a class="nav-link position-relative" href="#" id="cartDropdown" role="button" 
+                           data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="bi bi-cart3 fs-5"></i>
+                            <span id="mini-cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                0
+                            </span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end mini-cart-menu" aria-labelledby="cartDropdown">
-                            <div id="mini-cart-content" class="mini-cart--dark">
-                                <div class="mini-cart-header d-flex justify-content-between align-items-center">
-                                    <strong>Cart</strong>
-                                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="document.querySelector('#cartDropdown').click()"></button>
-                                </div>
-                                <div class="mini-cart-body mt-2">
-                                    <div class="mini-cart-empty">Your cart is empty.</div>
-                                </div>
-                                <div class="mt-3 d-grid gap-2">
-                                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-dark btn-sm">View Cart</a>
-                                    <a href="{{ url_for('checkout') }}" class="btn btn-dark btn-sm">Checkout</a>
-                                </div>
-                            </div>
+                        
+                        <!-- Mini Cart Dropdown -->
+                        <div class="dropdown-menu dropdown-menu-end p-3" id="mini-cart-content" style="min-width: 320px; max-width: 400px;">
+                            {% include 'partials/mini_cart.html' %}
                         </div>
                     </li>
                 </ul>

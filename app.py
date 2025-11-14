@@ -1518,6 +1518,42 @@ def internal_error(e):
     return render_template('error.html', error_code=500, error_message="Internal Server Error", year=datetime.now().year), 500
 
 
+@app.route("/cart/items")
+def cart_items_api():
+    """API endpoint to get cart items for mini cart"""
+    cart = session.get('cart', {})
+    items = []
+    total = 0
+    
+    if cart:
+        conn = get_db_connection()
+        for cart_key, item_data in cart.items():
+            product_id = item_data['product_id']
+            quantity = item_data['quantity']
+            
+            product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+            if product:
+                price = item_data.get('price', product['price'])
+                subtotal = price * quantity
+                
+                items.append({
+                    'product_id': product_id,
+                    'name': product['name'],
+                    'price': price,
+                    'quantity': quantity,
+                    'subtotal': subtotal,
+                    'image': product['image']
+                })
+                total += subtotal
+        conn.close()
+    
+    return jsonify({
+        'items': items,
+        'total': total,
+        'count': len(cart)
+    })
+
+
 if __name__ == "__main__":
     init_db()
     init_orders_db()
