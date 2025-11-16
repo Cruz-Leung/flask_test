@@ -122,48 +122,51 @@ def utility_processor():
 def index():
     return render_template("index.html", year=datetime.now().year)
 
+@app.route("/machines")
 @app.route("/machines/<category>")
-def machines(category):
-    """Display coffee machines by category"""
+def machines(category='semi-auto'):
+    """Display coffee machines by category with tab switching"""
     conn = get_db_connection()
+    
+    # Fetch ALL machine products (all categories)
+    all_products = conn.execute("""
+        SELECT * FROM products 
+        WHERE category IN ('semi-auto', 'fully-auto', 'pod')
+           OR subcategory IN ('semi-auto', 'fully-auto', 'pod')
+           OR (category = 'machines' AND subcategory IN ('semi-auto', 'fully-auto', 'pod'))
+        ORDER BY category, name
+    """).fetchall()
+    
+    conn.close()
+    
+    # Convert products to list of dicts for JSON serialization
+    products_list = []
+    for product in all_products:
+        products_list.append({
+            'id': product['id'],
+            'sku': product['sku'],
+            'name': product['name'],
+            'category': product['category'],
+            'subcategory': product['subcategory'],
+            'price': product['price'],
+            'stock': product['stock'],
+            'description': product['description'],
+            'image': product['image'],
+            'discount_percentage': product['discount_percentage']
+        })
+    
+    import json
+    products_json = json.dumps(products_list)
     
     # Validate category
     valid_categories = ['semi-auto', 'fully-auto', 'pod']
     if category not in valid_categories:
-        abort(404)
-    
-    # Query all products to debug
-    all_products = conn.execute("SELECT id, sku, name, category, subcategory FROM products").fetchall()
-    print("\n=== DEBUG: All products in database ===")
-    for p in all_products:
-        print(f"ID: {p['id']}, Name: {p['name']}, Category: '{p['category']}', Subcategory: '{p['subcategory']}'")
-    
-    # Try multiple ways to find products
-    products = conn.execute("""
-        SELECT * FROM products 
-        WHERE category = ? 
-           OR subcategory = ?
-           OR (category = 'machines' AND subcategory = ?)
-        ORDER BY name
-    """, (category, category, category)).fetchall()
-    
-    print(f"\n=== DEBUG: Found {len(products)} products for category '{category}' ===")
-    for p in products:
-        print(f"  - {p['name']}")
-    
-    conn.close()
-    
-    category_titles = {
-        'semi-auto': 'Semi-Automatic Machines',
-        'fully-auto': 'Fully Automatic Machines',
-        'pod': 'Pod Machines'
-    }
+        category = 'semi-auto'
     
     return render_template(
         "machines.html",
-        products=products,
+        products_json=products_json,
         category=category,
-        title=category_titles.get(category, 'Coffee Machines'),
         year=datetime.now().year
     )
 
@@ -549,45 +552,40 @@ def cart_update(product_id):
 
 @app.route("/cart/mini")
 def cart_mini():
-    """Get mini cart data for dropdown"""
-    try:
-        cart = session.get('cart', {})
-        cart_items = []
-        total = 0
-        
-        if cart:
-            conn = get_db_connection()
-            for cart_key, item_data in cart.items():
-                product_id = item_data['product_id']
-                quantity = item_data['quantity']
+    """Return mini cart HTML fragment"""
+    cart = session.get('cart', {})
+    cart_items = {}
+    total = 0
+    
+    if cart:
+        conn = get_db_connection()
+        for cart_key, item_data in cart.items():
+            product_id = item_data['product_id']
+            quantity = item_data['quantity']
+            
+            product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+            if product:
+                # Use stored price from cart (which is already discounted)
+                price = item_data.get('price', product['price'])
+                subtotal = price * quantity
                 
-                product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
-                if product:
-                    # Use stored price from cart (which is already discounted)
-                    price = item_data.get('price', product['price'])
-                    subtotal = price * quantity
-                    
-                    cart_items.append({
-                        'cart_key': cart_key,
-                        'product_id': product_id,
-                        'name': product['name'],
-                        'price': price,
-                        'quantity': quantity,
-                        'subtotal': subtotal,
-                        'image': product['image']
-                    })
-                    total += subtotal
-            conn.close()
-        
-        return jsonify({
-            'items': cart_items,
-            'total': total,
-            'count': sum(item['quantity'] for item in cart_items)
-        })
-        
-    except Exception as e:
-        print(f"Error loading mini cart: {e}")
-        return jsonify({'items': [], 'total': 0, 'count': 0})
+                cart_items[cart_key] = {
+                    'id': product_id,
+                    'cart_key': cart_key,
+                    'name': product['name'],
+                    'price': price,
+                    'quantity': quantity,
+                    'subtotal': subtotal,
+                    'image': product['image']
+                }
+                total += subtotal
+        conn.close()
+    
+    # Render the mini cart partial and return HTML
+    return render_template('partials/mini_cart.html', 
+                         cart=cart_items,
+                         total=total,
+                         count=len(cart))
 
 
 @app.route("/cart")

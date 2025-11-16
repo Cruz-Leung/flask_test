@@ -225,14 +225,23 @@
                         <a class="nav-link position-relative" href="#" id="cartDropdown" role="button" 
                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
                             <i class="bi bi-cart3 fs-5"></i>
+                            {% set cart = session.get('cart', {}) %}
+                            {% set cart_count = cart.values()|map(attribute='quantity')|sum if cart else 0 %}
                             <span id="mini-cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                0
+                                {{ cart_count }}
                             </span>
                         </a>
                         
                         <!-- Mini Cart Dropdown -->
-                        <div class="dropdown-menu dropdown-menu-end p-3" id="mini-cart-content" style="min-width: 320px; max-width: 400px;">
-                            {% include 'partials/mini_cart.html' %}
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 320px; max-width: 400px;">
+                            {% set cart = session.get('cart', {}) %}
+                            {% set cart_total = namespace(value=0) %}
+                            {% for key, item in cart.items() %}
+                                {% set cart_total.value = cart_total.value + (item.price * item.quantity) %}
+                            {% endfor %}
+                            {% set cart_count = cart.values()|map(attribute='quantity')|sum if cart else 0 %}
+                            
+                            {% include 'partials/mini_cart.html' with context %}
                         </div>
                     </li>
                 </ul>

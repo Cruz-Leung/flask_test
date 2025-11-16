@@ -65,9 +65,11 @@
                                     </td>
                                     <td class="text-end fw-bold">${{ '%.2f'|format(item.subtotal) }}</td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-danger" 
-                                                type="button"
-                                                onclick="removeFromCartPage('{{ item.product_id }}')">
+                                        <!-- Replace the form-based remove button with this -->
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger" 
+                                                onclick="removeFromCart('{{ item.product_id }}')"
+                                                title="Remove">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -150,12 +152,37 @@
 
 {% block extra_js %}
 <script>
-function updateCartQuantity(productId, newQuantity) {
-    if (newQuantity < 1) {
-        if (!confirm('Remove this item from cart?')) {
-            return;
-        }
-        newQuantity = 0;
+function removeFromCart(productId) {
+    if (confirm('Remove this item from cart?')) {
+        fetch(`/cart/update/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quantity: 0 })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error removing item');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error removing item');
+        });
+    }
+}
+
+function updateQuantity(productId) {
+    const input = document.querySelector(`input[data-product-id="${productId}"]`);
+    const quantity = parseInt(input.value);
+    
+    if (quantity < 1) {
+        removeFromCart(productId);
+        return;
     }
     
     fetch(`/cart/update/${productId}`, {
@@ -163,45 +190,19 @@ function updateCartQuantity(productId, newQuantity) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity: newQuantity })
+        body: JSON.stringify({ quantity: quantity })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Reload page to update cart display
-            location.reload();
+            window.location.reload();
         } else {
-            alert('Failed to update cart');
+            alert('Error updating quantity');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred');
-    });
-}
-
-function removeFromCartPage(productId) {
-    if (!confirm('Remove this item from cart?')) {
-        return;
-    }
-    
-    fetch(`/cart/remove/${productId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Failed to remove item');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred');
+        alert('Error updating quantity');
     });
 }
 </script>
