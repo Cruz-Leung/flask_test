@@ -138,8 +138,9 @@
 
                 <div class="d-grid gap-2">
                     <button type="button" 
+                            id="add-to-cart-btn-{{ product.id }}"
                             class="btn btn-dark btn-lg"
-                            onclick="addToCartDetail({{ product.id }})">
+                            onclick="addToCartDetailAnimated({{ product.id }})">
                         <i class="bi bi-cart-plus me-2"></i>Add to Cart
                     </button>
                     
@@ -259,7 +260,83 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
+// Animated add to cart for product detail page
+async function addToCartDetailAnimated(productId) {
+    const button = document.getElementById(`add-to-cart-btn-${productId}`);
+    const quantityInput = document.getElementById(`quantity-${productId}`);
+    const quantity = parseInt(quantityInput?.value) || 1;
+    
+    // Disable button and show loading
+    button.disabled = true;
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Adding...';
+    
+    try {
+        const response = await fetch(`/cart/add/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quantity: quantity })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Success animation
+            button.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Added to Cart!';
+            button.classList.remove('btn-dark');
+            button.classList.add('btn-success');
+            
+            // Update cart count
+            if (window.MiniCart) {
+                window.MiniCart.updateCartCount();
+            }
+            
+            // Reset quantity to 1
+            if (quantityInput) {
+                quantityInput.value = 1;
+            }
+            
+            // Reload page after 1.5 seconds to update mini cart
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Error - show message and reset button
+            button.innerHTML = '<i class="bi bi-x-circle me-2"></i>Error';
+            button.classList.remove('btn-dark');
+            button.classList.add('btn-danger');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-dark');
+                button.disabled = false;
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Error - show message and reset button
+        button.innerHTML = '<i class="bi bi-x-circle me-2"></i>Error';
+        button.classList.remove('btn-dark');
+        button.classList.add('btn-danger');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-danger');
+            button.classList.add('btn-dark');
+            button.disabled = false;
+        }, 2000);
+    }
+}
+
+// Keep the changeQuantity function
 function changeQuantity(productId, change) {
     const input = document.getElementById(`quantity-${productId}`);
     const currentValue = parseInt(input.value);
@@ -274,6 +351,3 @@ function changeQuantity(productId, change) {
 </script>
 {% endblock %}
 
-{% block extra_js %}
-<!-- No additional JavaScript needed - cart.js handles everything -->
-{% endblock %}
