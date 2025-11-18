@@ -26,10 +26,11 @@
             <div class="small text-white-50">x{{ item.quantity }} · ${{ '%.2f'|format(item.price) }}</div>
           </div>
           <button type="button" 
-                  class="btn btn-sm btn-outline-light" 
+                  class="btn btn-sm btn-danger mini-cart-delete-btn" 
                   onclick="removeFromMiniCart('{{ item.product_id }}')" 
-                  title="Remove" 
-                  style="padding: 0.25rem 0.5rem;">×</button>
+                  title="Remove">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </li>
         {% endfor %}
       </ul>
@@ -49,29 +50,46 @@
 </div>
 
 <script>
-// Remove item from mini cart
+// Remove item from mini cart - NO POPUP
 function removeFromMiniCart(productId) {
-    if (confirm('Remove this item from cart?')) {
-        fetch(`/cart/update/${productId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ quantity: 0 })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Reload page to update cart
-                window.location.reload();
-            } else {
-                alert('Error removing item from cart');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+    // Show loading state on button
+    const buttons = document.querySelectorAll('.mini-cart-delete-btn');
+    buttons.forEach(btn => {
+        if (btn.onclick.toString().includes(productId)) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        }
+    });
+    
+    fetch(`/cart/update/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: 0 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to update cart
+            window.location.reload();
+        } else {
             alert('Error removing item from cart');
+            // Re-enable button on error
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error removing item from cart');
+        // Re-enable button on error
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-x-lg"></i>';
         });
-    }
+    });
 }
 </script>

@@ -6,7 +6,7 @@
 <!-- Multi-Slide Hero Carousel -->
 <section class="hero-carousel">
     <div class="hero-slides">
-        <!-- Slide 1 -->
+        <!-- Slide 1 - Keep original full-screen style -->
         <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}');">
             <div class="hero-overlay"></div>
             <div class="hero-content">
@@ -18,41 +18,62 @@
             </div>
         </div>
 
-        <!-- Slide 2 -->
-        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}');">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <div class="container text-center text-white">
-                    <span class="badge bg-warning text-dark mb-3 hero-badge">Limited Offer</span>
-                    <h1 class="display-3 fw-bold mb-3 hero-title">Barista Express — 10% Off</h1>
-                    <p class="lead mb-4 hero-subtitle">Professional-grade espresso at home. Free shipping this week.</p>
-                    {% set breville_id = get_breville_id() %}
-                    <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="btn btn-light btn-lg">Learn More</a>
+        <!-- Slide 2 - Split layout (Text LEFT, Image RIGHT) -->
+        <div class="hero-slide hero-slide-split">
+            <div class="hero-split-container">
+                <!-- Left: Black section with text -->
+                <div class="hero-split-left">
+                    <div class="hero-split-content">
+                        <span class="badge bg-warning text-dark mb-3 fs-6">Limited Offer</span>
+                        <h1 class="display-4 fw-bold mb-4">Barista Express</h1>
+                        <h2 class="h3 mb-4 text-white-50">10% Off This Week</h2>
+                        <p class="lead mb-4">Professional-grade espresso at home. Free shipping included.</p>
+                        {% set breville_id = get_breville_id() %}
+                        <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="btn btn-light btn-lg">
+                            Learn More <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- Right: Image -->
+                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}');"></div>
+            </div>
+        </div>
+
+        <!-- Slide 3 - Split layout (Image LEFT, Text RIGHT) -->
+        <div class="hero-slide hero-slide-split hero-slide-reverse">
+            <div class="hero-split-container">
+                <!-- Left: Image -->
+                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/bean_home.jpg') }}');"></div>
+                <!-- Right: Black section with text -->
+                <div class="hero-split-left">
+                    <div class="hero-split-content">
+                        <h1 class="display-4 fw-bold mb-4">Premium Coffee Beans</h1>
+                        <h2 class="h3 mb-4 text-white-50">Roasted to Perfection</h2>
+                        <p class="lead mb-4">Single origin & signature blends from the world's finest coffee regions.</p>
+                        <a href="{{ url_for('beans') }}" class="btn btn-light btn-lg">
+                            Browse Beans <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Slide 3 -->
-        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/bean_home.jpg') }}');">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <div class="container text-center text-white">
-                    <h1 class="display-3 fw-bold mb-3 hero-title">Premium Coffee Beans</h1>
-                    <p class="lead mb-4 hero-subtitle">Single origin & signature blends roasted to perfection.</p>
-                    <a href="{{ url_for('beans') }}" class="btn btn-outline-light btn-lg">Browse Beans</a>
+        <!-- Slide 4 - Split layout (Text LEFT, Image RIGHT) -->
+        <div class="hero-slide hero-slide-split">
+            <div class="hero-split-container">
+                <!-- Left: Black section with text -->
+                <div class="hero-split-left">
+                    <div class="hero-split-content">
+                        <h1 class="display-4 fw-bold mb-4">Member Benefits</h1>
+                        <h2 class="h3 mb-4 text-white-50">Join the Club</h2>
+                        <p class="lead mb-4">Exclusive discounts, early access to limited releases & free shipping on all orders.</p>
+                        <a href="{{ url_for('membership') }}" class="btn btn-light btn-lg">
+                            Discover More <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Slide 4 -->
-        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');">
-            <div class="hero-overlay hero-overlay-light"></div>
-            <div class="hero-content">
-                <div class="container text-center">
-                    <h1 class="display-3 fw-bold mb-3 hero-title text-dark">Member Benefits</h1>
-                    <p class="lead mb-4 hero-subtitle text-dark">Exclusive discounts, early access & free shipping.</p>
-                    <a href="{{ url_for('membership') }}" class="btn btn-dark btn-lg">Discover</a>
-                </div>
+                <!-- Right: Image -->
+                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');"></div>
             </div>
         </div>
     </div>

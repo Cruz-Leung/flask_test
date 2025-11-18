@@ -813,6 +813,208 @@ body.site-bg {
     }
 }
 
+@media (max-width: 768px) {
+    .hero-carousel {
+        height: 60vh;
+        min-height: 500px;
+    }
+
+    .hero-slide .hero-title {
+        font-size: 2rem !important;
+    }
+
+    .hero-slide .hero-subtitle {
+        font-size: 1rem !important;
+    }
+
+    .hero-arrow {
+        width: 40px;
+        height: 40px;
+    }
+
+    .hero-arrow-prev {
+        left: 15px;
+    }
+
+    .hero-arrow-next {
+        right: 15px;
+    }
+
+    .hero-dots {
+        bottom: 20px;
+    }
+}
+
+/* ===========================
+   HERO CAROUSEL - SPLIT LAYOUT
+=========================== */
+
+/* Split layout for slides 2, 3, 4 */
+.hero-slide-split {
+    background-image: none !important;
+}
+
+.hero-split-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    position: relative;
+}
+
+/* Left section - Black background with text */
+.hero-split-left {
+    flex: 0 0 50%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    color: white;
+    position: relative;
+}
+
+/* Gradient fade on the right edge of black section */
+.hero-split-left::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Gradient fade on the left edge when reversed */
+.hero-slide-reverse .hero-split-left::after {
+    right: auto;
+    left: 0;
+    background: linear-gradient(to left, transparent, rgba(0, 0, 0, 0.3));
+}
+
+.hero-split-content {
+    max-width: 500px;
+    animation: fadeInLeft 0.8s ease-out;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-split-content h1 {
+    color: white;
+    line-height: 1.2;
+}
+
+.hero-split-content h2 {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.hero-split-content p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-split-content .badge {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+/* Right section - Image */
+.hero-split-right {
+    flex: 0 0 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: fadeInRight 0.8s ease-out;
+    position: relative;
+}
+
+/* Gradient fade on the left edge of image section */
+.hero-split-right::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(to left, transparent, rgba(26, 26, 26, 0.3));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Gradient fade on the right edge when reversed */
+.hero-slide-reverse .hero-split-right::after {
+    left: auto;
+    right: 0;
+    background: linear-gradient(to right, transparent, rgba(26, 26, 26, 0.3));
+}
+
+/* Animations for split layout */
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive - Stack on mobile */
+@media (max-width: 992px) {
+    .hero-split-container {
+        flex-direction: column;
+        min-height: 700px;
+    }
+    
+    .hero-split-left,
+    .hero-split-right {
+        flex: 0 0 50%;
+        min-height: 350px;
+    }
+    
+    .hero-split-left {
+        padding: 3rem 2rem;
+    }
+    
+    .hero-split-content {
+        max-width: 100%;
+    }
+    
+    /* Remove side gradients on mobile */
+    .hero-split-left::after,
+    .hero-split-right::after {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-split-left {
+        padding: 2rem 1.5rem;
+    }
+    
+    .hero-split-content h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-split-content h2 {
+        font-size: 1.5rem;
+    }
+}
+
 /* ===========================
    EXISTING STYLES
 =========================== */
@@ -1208,443 +1410,174 @@ body.site-bg {
     font-size: 1.5rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .hero-carousel {
-        height: 60vh;
-        min-height: 500px;
-    }
-
-    .hero-slide .hero-title {
-        font-size: 2rem !important;
-    }
-
-    .hero-slide .hero-subtitle {
-        font-size: 1rem !important;
-    }
-
-    .hero-arrow {
-        width: 40px;
-        height: 40px;
-    }
-
-    .hero-arrow-prev {
-        left: 15px;
-    }
-
-    .hero-arrow-next {
-        right: 15px;
-    }
-
-    .hero-dots {
-        bottom: 20px;
-    }
-}
-
-/* Product categories fade-in animation */
-.product-categories {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.product-categories.animate {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.product-categories .col-md-4 {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.product-categories.animate .col-md-4:nth-child(1) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.1s;
-}
-
-.product-categories.animate .col-md-4:nth-child(2) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.3s;
-}
-
-.product-categories.animate .col-md-4:nth-child(3) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.5s;
-}
-
 /* ===========================
-   PRODUCT CATEGORY CARDS - ENHANCED
+   HERO CAROUSEL - SPLIT LAYOUT
 =========================== */
 
-.product-categories .product-card {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 1rem;
-    overflow: hidden;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    position: relative;
+/* Split layout for slides 2, 3, 4 */
+.hero-slide-split {
+    background-image: none !important;
 }
 
-.product-categories .product-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(212, 165, 116, 0.05) 0%, rgba(139, 69, 19, 0.05) 100%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.product-categories .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-}
-
-.product-categories .product-card:hover::before {
-    opacity: 1;
-}
-
-/* Card image enhancements */
-.product-categories .product-card .card-img-top {
-    height: 280px;
-    object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 1rem 1rem 0 0;
-}
-
-.product-categories .product-card:hover .card-img-top {
-    transform: scale(1.08);
-}
-
-/* Card body */
-.product-categories .product-card .card-body {
-    position: relative;
-    z-index: 2;
-    padding: 1.75rem;
-    transition: padding 0.3s ease;
-}
-
-.product-categories .product-card:hover .card-body {
-    padding: 2rem 1.75rem;
-}
-
-/* Card title */
-.product-categories .product-card .card-title {
-    font-weight: 700;
-    font-size: 1.4rem;
-    color: var(--brand-black);
-    margin-bottom: 0.75rem;
-    transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.product-categories .product-card:hover .card-title {
-    color: var(--brand-brown);
-    transform: translateX(4px);
-}
-
-/* Card text */
-.product-categories .product-card .card-text {
-    color: var(--muted);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    transition: color 0.3s ease;
-}
-
-.product-categories .product-card:hover .card-text {
-    color: #555;
-}
-
-/* Button microinteractions */
-.product-categories .btn-modern {
-    background: var(--brand-black);
-    color: var(--brand-light);
-    border: 2px solid var(--brand-black);
-    padding: 0.75rem 1.75rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    display: inline-block;
-}
-
-.product-categories .btn-modern::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: var(--brand-brown);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s ease, height 0.5s ease;
-    z-index: -1;
-}
-
-.product-categories .btn-modern:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.3);
-    color: white;
-    border-color: var(--brand-brown);
-}
-
-.product-categories .btn-modern:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-.product-categories .btn-modern:active {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 3px 10px rgba(139, 69, 19, 0.2);
-}
-
-/* Icon animation on hover */
-.product-categories .btn-modern i {
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
-
-.product-categories .btn-modern:hover i {
-    transform: translateX(4px);
-}
-
-/* Stagger animation for cards */
-.product-categories .col-md-4 {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-categories.animate .col-md-4:nth-child(1) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.15s;
-}
-
-.product-categories.animate .col-md-4:nth-child(2) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.3s;
-}
-
-.product-categories.animate .col-md-4:nth-child(3) {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.45s;
-}
-
-/* Add shine effect on hover */
-.product-categories .product-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.15) 50%,
-        transparent 70%
-    );
-    transform: translateX(-100%) translateY(-100%) rotate(45deg);
-    transition: transform 0.6s ease;
-    pointer-events: none;
-    z-index: 3;
-}
-
-.product-categories .product-card:hover::after {
-    transform: translateX(100%) translateY(100%) rotate(45deg);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .product-categories .product-card .card-img-top {
-        height: 220px;
-    }
-    
-    .product-categories .product-card:hover {
-        transform: translateY(-4px);
-    }
-    
-    .product-categories .btn-modern {
-        padding: 0.65rem 1.5rem;
-        font-size: 0.95rem;
-    }
-}
-
-/* Add subtle border glow on hover */
-.product-categories .product-card {
-    border: 2px solid transparent;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.4s ease;
-}
-
-.product-categories .product-card:hover {
-    border-color: rgba(212, 165, 116, 0.3);
-}
-
-/* Promo Banner */
-.promo-banner {
-    position: sticky;
-    top: 0;
-    z-index: 1029; /* Below navbar (1030) but above content */
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
-    animation: slideDown 0.5s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.promo-banner strong {
-    font-weight: 600;
-}
-
-/* Alternative animated version with pulse */
-@keyframes pulseGlow {
-    0%, 100% {
-        background-color: #198754;
-    }
-    50% {
-        background-color: #20a661;
-    }
-}
-
-.promo-banner {
-    animation: slideDown 0.5s ease-out, pulseGlow 3s ease-in-out infinite;
-}
-
-/* Dropdown Menu Styles */
-.dropdown-menu-wide {
-    min-width: 320px;
-    max-width: 400px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    border: none;
-    padding: 0;
-    overflow: hidden;
-}
-
-/* Dropdown Banner (Image at top) */
-.dropdown-banner {
-    height: 140px;
-    background-size: cover;
-    background-position: center;
-    position: relative;
+.hero-split-container {
     display: flex;
-    align-items: flex-end;
-    padding: 1.25rem;
-}
-
-.dropdown-banner-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
-}
-
-.dropdown-banner-text {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
     position: relative;
-    z-index: 2;
-    color: white;
 }
 
-.dropdown-banner-text h5 {
-    font-weight: 600;
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-}
-
-.dropdown-banner-text small {
-    font-size: 0.85rem;
-    opacity: 0.95;
-}
-
-/* Dropdown Items */
-.dropdown-menu-wide .dropdown-item {
-    padding: 0.75rem 1.25rem;
-    transition: all 0.2s ease;
-}
-
-.dropdown-menu-wide .dropdown-item:hover {
-    background-color: #f8f9fa;
-    padding-left: 1.5rem;
-}
-
-.dropdown-icon {
-    width: 40px;
-    height: 40px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+/* Left section - Black background with text */
+.hero-split-left {
+    flex: 0 0 50%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    color: #2c2c2c;
-    transition: all 0.2s ease;
-}
-
-.dropdown-item:hover .dropdown-icon {
-    background-color: #2c2c2c;
+    padding: 4rem;
     color: white;
-    transform: scale(1.05);
+    position: relative;
 }
 
-.dropdown-item .fw-semibold {
-    font-size: 0.95rem;
-    color: #2c2c2c;
+/* Gradient fade on the right edge of black section */
+.hero-split-left::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+    z-index: 1;
 }
 
-.dropdown-item small {
-    font-size: 0.8rem;
-    color: #6c757d;
+/* Gradient fade on the left edge when reversed */
+.hero-slide-reverse .hero-split-left::after {
+    right: auto;
+    left: 0;
+    background: linear-gradient(to left, transparent, rgba(0, 0, 0, 0.3));
 }
 
-/* Dropdown Animation */
-.dropdown-menu {
-    animation: slideDown 0.3s ease-out;
+.hero-split-content {
+    max-width: 500px;
+    animation: fadeInLeft 0.8s ease-out;
+    position: relative;
+    z-index: 2;
 }
 
-@keyframes slideDown {
+.hero-split-content h1 {
+    color: white;
+    line-height: 1.2;
+}
+
+.hero-split-content h2 {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.hero-split-content p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-split-content .badge {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+/* Right section - Image */
+.hero-split-right {
+    flex: 0 0 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: fadeInRight 0.8s ease-out;
+    position: relative;
+}
+
+/* Gradient fade on the left edge of image section */
+.hero-split-right::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(to left, transparent, rgba(26, 26, 26, 0.3));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Gradient fade on the right edge when reversed */
+.hero-slide-reverse .hero-split-right::after {
+    left: auto;
+    right: 0;
+    background: linear-gradient(to right, transparent, rgba(26, 26, 26, 0.3));
+}
+
+/* Animations for split layout */
+@keyframes fadeInLeft {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateX(-30px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
 }
 
-/* Dropdown Divider */
-.dropdown-menu-wide .dropdown-divider {
-    margin: 0;
-    border-color: #e9ecef;
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive - Stack on mobile */
+@media (max-width: 992px) {
+    .hero-split-container {
+        flex-direction: column;
+        min-height: 700px;
+    }
+    
+    .hero-split-left,
+    .hero-split-right {
+        flex: 0 0 50%;
+        min-height: 350px;
+    }
+    
+    .hero-split-left {
+        padding: 3rem 2rem;
+    }
+    
+    .hero-split-content {
+        max-width: 100%;
+    }
+    
+    /* Remove side gradients on mobile */
+    .hero-split-left::after,
+    .hero-split-right::after {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-split-left {
+        padding: 2rem 1.5rem;
+    }
+    
+    .hero-split-content h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-split-content h2 {
+        font-size: 1.5rem;
+    }
 }
 
 /* ===========================
@@ -1982,4 +1915,36 @@ body.site-bg {
     .category-tabs .nav-link i {
         display: none; /* Hide icons on very small screens */
     }
+}
+
+/* Mini cart delete button */
+.mini-cart-delete-btn {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mini-cart-delete-btn:hover {
+    background-color: #c82333;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
+
+.mini-cart-delete-btn:active {
+    transform: scale(0.95);
+}
+
+.mini-cart-delete-btn i {
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.mini-cart-delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
