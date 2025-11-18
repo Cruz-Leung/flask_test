@@ -201,6 +201,85 @@
     </div>
 </section>
 
+<!-- Trending Products Section -->
+<section class="container py-5">
+    <div class="text-center mb-5" 
+         data-aos="fade-down" 
+         data-aos-duration="600">
+        <h2 class="display-5 fw-bold mb-3">Trending Products</h2>
+        <p class="lead text-muted">Popular picks from our customers this week</p>
+    </div>
+
+    <div class="trending-products-wrapper">
+        <!-- Left Scroll Button -->
+        <button class="trending-scroll-btn trending-scroll-left" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <!-- Products Container -->
+        <div class="trending-products-container" id="trendingProductsContainer">
+            <div class="trending-products-track">
+                {% for product in trending_products %}
+                <div class="trending-product-card">
+                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none">
+                        <div class="card h-100 product-card">
+                            <div class="trending-card-img-wrapper">
+                                {% if product.image %}
+                                <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}">
+                                {% endif %}
+                                
+                                {% if product.discount_percentage and product.discount_percentage > 0 %}
+                                <span class="badge bg-warning text-dark trending-badge">
+                                    <i class="bi bi-tag-fill me-1"></i>{{ product.discount_percentage }}% OFF
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title text-dark mb-2">{{ product.name }}</h6>
+                                
+                                <div class="mt-auto">
+                                    {% if product.discount_percentage and product.discount_percentage > 0 %}
+                                    {% set discounted_price = product.price * (1 - product.discount_percentage / 100) %}
+                                    <div class="mb-3">
+                                        <span class="text-decoration-line-through text-muted small">
+                                            ${{ '%.2f'|format(product.price) }}
+                                        </span>
+                                        <br>
+                                        <span class="fw-bold text-success fs-6">
+                                            ${{ '%.2f'|format(discounted_price) }}
+                                        </span>
+                                    </div>
+                                    {% else %}
+                                    <p class="fw-bold mb-3 fs-6">${{ '%.2f'|format(product.price) }}</p>
+                                    {% endif %}
+                                    
+                                    <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                                       class="btn btn-outline-dark btn-sm w-100 trending-view-btn">
+                                        View Product <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Scroll Button -->
+        <button class="trending-scroll-btn trending-scroll-right" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</section>
+
 <!-- Product Categories with animations -->
 <section class="container py-5" id="product-categories">
     <!-- Section Header -->
@@ -402,6 +481,114 @@
             behavior: 'smooth' 
         });
     });
+
+    // Trending Products Horizontal Scroll
+    const trendingContainer = document.querySelector('.trending-products-container');
+    const trendingTrack = document.querySelector('.trending-products-track');
+    const scrollLeftBtn = document.querySelector('.trending-scroll-left');
+    const scrollRightBtn = document.querySelector('.trending-scroll-right');
+
+    if (trendingContainer && trendingTrack && scrollLeftBtn && scrollRightBtn) {
+        const gap = 24; // 1.5rem = 24px
+        const cardWidth = 280; // Width of each card
+        const scrollAmount = (cardWidth + gap) * 4; // Scroll 4 cards at a time
+        let currentScroll = 0;
+
+        function updateButtons() {
+            const maxScroll = trendingTrack.scrollWidth - trendingContainer.clientWidth;
+            
+            // Hide left button at start
+            if (currentScroll <= 0) {
+                scrollLeftBtn.classList.add('hidden');
+            } else {
+                scrollLeftBtn.classList.remove('hidden');
+            }
+            
+            // Hide right button at end
+            if (currentScroll >= maxScroll - 10) { // -10 for small tolerance
+                scrollRightBtn.classList.add('hidden');
+            } else {
+                scrollRightBtn.classList.remove('hidden');
+            }
+        }
+
+        function scrollTo(position) {
+            const maxScroll = trendingTrack.scrollWidth - trendingContainer.clientWidth;
+            currentScroll = Math.max(0, Math.min(maxScroll, position));
+            trendingTrack.style.transform = `translateX(-${currentScroll}px)`;
+            updateButtons();
+        }
+
+        scrollLeftBtn.addEventListener('click', () => {
+            scrollTo(currentScroll - scrollAmount);
+        });
+
+        scrollRightBtn.addEventListener('click', () => {
+            scrollTo(currentScroll + scrollAmount);
+        });
+
+        // Touch/Mouse drag scrolling
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+
+        trendingContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - trendingContainer.offsetLeft;
+            scrollLeft = currentScroll;
+            trendingContainer.style.cursor = 'grabbing';
+            trendingContainer.style.userSelect = 'none';
+        });
+
+        trendingContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            trendingContainer.style.cursor = 'grab';
+        });
+
+        trendingContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+            trendingContainer.style.cursor = 'grab';
+        });
+
+        trendingContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - trendingContainer.offsetLeft;
+            const walk = (x - startX) * 1.5; // Multiply for faster dragging
+            scrollTo(scrollLeft - walk);
+        });
+
+        // Touch support for mobile
+        let touchStart = 0;
+        
+        trendingContainer.addEventListener('touchstart', (e) => {
+            touchStart = e.touches[0].clientX;
+            scrollLeft = currentScroll;
+        });
+
+        trendingContainer.addEventListener('touchmove', (e) => {
+            if (!touchStart) return;
+            const touchCurrent = e.touches[0].clientX;
+            const diff = touchStart - touchCurrent;
+            scrollTo(scrollLeft + diff);
+        });
+
+        trendingContainer.addEventListener('touchend', () => {
+            touchStart = 0;
+        });
+
+        // Initialize button states
+        updateButtons();
+        
+        // Update on window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateButtons();
+            }, 250);
+        });
+    }
 
     // Start autoplay
     startAutoplay();

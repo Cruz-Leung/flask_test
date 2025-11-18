@@ -1954,7 +1954,15 @@ body.site-bg {
 =========================== */
 
 .promo-bar {
-    margin: 4rem 0;
+    margin: 2.5rem 0; /* Reduced from 4rem */
+}
+
+.promo-bar:first-child {
+    margin-top: 0; /* Remove top margin from first bar */
+}
+
+.promo-bar:last-child {
+    margin-bottom: 0; /* Remove bottom margin from last bar */
 }
 
 .promo-bar-content {
@@ -2383,4 +2391,212 @@ html {
 /* Add spacing between sections */
 section {
     scroll-margin-top: 80px;
+}
+
+/* ===========================
+   TRENDING PRODUCTS SECTION
+=========================== */
+
+.trending-products-wrapper {
+    position: relative;
+    padding: 0 60px;
+}
+
+.trending-products-container {
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+}
+
+.trending-products-container:active {
+    cursor: grabbing;
+}
+
+.trending-products-track {
+    display: flex;
+    gap: 1.5rem;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1rem 0;
+    will-change: transform;
+}
+
+.trending-product-card {
+    flex: 0 0 280px;
+    min-width: 280px;
+    user-select: none;
+}
+
+.trending-card-img-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+
+.trending-card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    pointer-events: none;
+}
+
+.trending-product-card:hover .trending-card-img-wrapper img {
+    transform: scale(1.1);
+}
+
+.trending-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.trending-product-card .card {
+    border-radius: 12px;
+    border: 2px solid #1a1a1a; /* Black border */
+    transition: all 0.3s ease;
+    height: 100%;
+    background: white;
+}
+
+.trending-product-card:hover .card {
+    box-shadow: 0 8px 24px rgba(26, 26, 26, 0.2);
+    transform: translateY(-8px);
+    border-color: #2c2c2c;
+}
+
+.trending-product-card .card-body {
+    padding: 1.25rem;
+}
+
+.trending-product-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 2.6em;
+}
+
+/* View Product Button */
+.trending-view-btn {
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.trending-view-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    transition: left 0.4s ease;
+    z-index: 0;
+}
+
+.trending-view-btn:hover::before {
+    left: 0;
+}
+
+.trending-view-btn:hover {
+    color: white;
+    border-color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
+}
+
+.trending-view-btn i {
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.trending-view-btn span,
+.trending-view-btn {
+    position: relative;
+    z-index: 1;
+}
+
+.trending-view-btn:hover i {
+    transform: translateX(4px);
+}
+
+/* Scroll Buttons */
+.trending-scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e9ecef;
+    color: #1a1a1a;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.trending-scroll-btn:hover {
+    background: var(--brand-black);
+    color: white;
+    border-color: var(--brand-black);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.trending-scroll-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.trending-scroll-left {
+    left: 0;
+}
+
+.trending-scroll-right {
+    right: 0;
+}
+
+/* Hide buttons when at start/end */
+.trending-scroll-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Hero carousel to promotional cards spacing */
+.hero-carousel + section {
+    padding-top: 2.5rem !important;
+}
+
+/* Promotional cards spacing */
+section.container.py-5 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+}
+
+/* Promo bars background section */
+section.container-fluid.py-5.bg-light {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
 }

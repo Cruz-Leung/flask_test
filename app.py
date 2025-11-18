@@ -120,7 +120,48 @@ def utility_processor():
 
 @app.route("/")
 def index():
-    return render_template("index.html", year=datetime.now().year)
+    """Homepage"""
+    conn = get_db_connection()
+    
+    # Fetch trending products from different categories
+    # Get 3 machines, 3 beans, and 2 accessories for variety
+    machines = conn.execute("""
+        SELECT * FROM products 
+        WHERE category = 'machines' AND stock > 0
+        ORDER BY 
+            CASE WHEN discount_percentage > 0 THEN 0 ELSE 1 END,
+            RANDOM()
+        LIMIT 3
+    """).fetchall()
+    
+    beans = conn.execute("""
+        SELECT * FROM products 
+        WHERE category = 'beans' AND stock > 0
+        ORDER BY 
+            CASE WHEN discount_percentage > 0 THEN 0 ELSE 1 END,
+            RANDOM()
+        LIMIT 3
+    """).fetchall()
+    
+    accessories = conn.execute("""
+        SELECT * FROM products 
+        WHERE category = 'accessories' AND stock > 0
+        ORDER BY 
+            CASE WHEN discount_percentage > 0 THEN 0 ELSE 1 END,
+            RANDOM()
+        LIMIT 2
+    """).fetchall()
+    
+    # Combine all products into one list
+    trending_products = list(machines) + list(beans) + list(accessories)
+    
+    conn.close()
+    
+    return render_template(
+        "index.html",
+        trending_products=trending_products,
+        year=datetime.now().year
+    )
 
 @app.route("/machines")
 @app.route("/machines/<category>")
