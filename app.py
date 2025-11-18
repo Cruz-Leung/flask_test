@@ -1552,6 +1552,12 @@ def cart_items_api():
     })
 
 
+@app.route("/coming-soon")
+def coming_soon():
+    """Coming soon page"""
+    return render_template("coming_soon.html", year=datetime.now().year)
+
+
 if __name__ == "__main__":
     init_db()
     init_orders_db()

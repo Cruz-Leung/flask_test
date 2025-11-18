@@ -58,22 +58,18 @@
             </div>
         </div>
 
-        <!-- Slide 4 - Split layout (Text LEFT, Image RIGHT) -->
-        <div class="hero-slide hero-slide-split">
-            <div class="hero-split-container">
-                <!-- Left: Black section with text -->
-                <div class="hero-split-left">
-                    <div class="hero-split-content">
-                        <h1 class="display-4 fw-bold mb-4">Member Benefits</h1>
-                        <h2 class="h3 mb-4 text-white-50">Join the Club</h2>
-                        <p class="lead mb-4">Exclusive discounts, early access to limited releases & free shipping on all orders.</p>
-                        <a href="{{ url_for('membership') }}" class="btn btn-light btn-lg">
-                            Discover More <i class="bi bi-arrow-right ms-2"></i>
-                        </a>
-                    </div>
+        <!-- Slide 4 - Full overlay style (like slide 1) -->
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="container text-center text-white">
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Member Benefits</h1>
+                    <h2 class="h2 mb-4 hero-subtitle">Join the Club</h2>
+                    <p class="lead mb-4">Exclusive discounts, early access to limited releases & free shipping on all orders.</p>
+                    <a href="{{ url_for('membership') }}" class="btn btn-outline-light btn-lg">
+                        Discover More <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
                 </div>
-                <!-- Right: Image -->
-                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');"></div>
             </div>
         </div>
     </div>
@@ -95,35 +91,51 @@
     </button>
 </section>
 
-<!-- Promotional cards -->
+<!-- Promotional cards with AOS animations -->
 <section class="container py-5">
     <div class="row g-4 align-items-stretch">
         <!-- Left: On Sale machine -->
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-6" 
+             data-aos="fade-up" 
+             data-aos-duration="800" 
+             data-aos-delay="100">
             {% set breville_id = get_breville_id() %}
             <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="text-decoration-none">
-                <div class="position-relative rounded overflow-hidden hero-promo" 
+                <div class="position-relative rounded overflow-hidden hero-promo promo-card-hover" 
                      style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}'); background-size:cover; background-position:center;">
                     <div class="hero-overlay"></div>
                     <div class="hero-content p-5">
-                        <span class="badge bg-warning text-dark mb-3">On Sale</span>
+                        <span class="badge bg-warning text-dark mb-3 badge-pulse">
+                            <i class="bi bi-tag-fill me-1"></i>On Sale
+                        </span>
                         <h2 class="display-5 fw-bold text-white">Barista Express — 10% Off</h2>
                         <p class="lead text-white">Limited time — our most-loved semi-automatic machine. Free shipping this week.</p>
-                        <button class="btn btn-light btn-lg">Learn More</button>
+                        <button class="btn btn-light btn-lg btn-hover-slide">
+                            Learn More <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
                     </div>
                 </div>
             </a>
         </div>
 
         <!-- Right: Membership option -->
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-6" 
+             data-aos="fade-up" 
+             data-aos-duration="800" 
+             data-aos-delay="300">
             <a href="{{ url_for('membership') }}" class="text-decoration-none">
-                <div class="position-relative rounded overflow-hidden" style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/membership.jpg') }}'); background-size:cover; background-position:center;">
+                <div class="position-relative rounded overflow-hidden promo-card-hover" 
+                     style="min-height:54vh; background-image: url('{{ url_for('static', filename='img/membership.jpg') }}'); background-size:cover; background-position:center;">
                     <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(245,240,230,0.18), rgba(245,240,230,0.45));"></div>
                     <div style="position:relative; z-index:2; padding:3.5rem;">
+                        <span class="badge bg-dark text-white mb-3 badge-pulse">
+                            <i class="bi bi-star-fill me-1"></i>Exclusive
+                        </span>
                         <h2 class="display-5 fw-bold" style="color:#1A1A1A;">Member Benefits</h2>
                         <p class="lead" style="color:#333333;">Exclusive discounts, early access to limited releases and free shipping for members.</p>
-                        <button class="btn btn-dark btn-lg">Discover</button>
+                        <button class="btn btn-dark btn-lg btn-hover-slide">
+                            Discover <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
                     </div>
                 </div>
             </a>
@@ -131,40 +143,141 @@
     </div>
 </section>
 
-<!-- Product Categories -->
-<section id="product-categories" class="container py-5 product-categories">
+<!-- Horizontal Promo Bars (BEFORE Category Cards) -->
+<section class="container-fluid py-5 bg-light">
+    <div class="container">
+        <!-- Bar 1: Slides from LEFT with popup -->
+        <div class="promo-bar promo-bar-left mb-5" 
+             data-aos="fade-right" 
+             data-aos-duration="1000" 
+             data-aos-easing="ease-out-cubic"
+             data-aos-once="true">
+            <div class="promo-bar-content">
+                <div class="promo-bar-image">
+                    <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" alt="Cruzy Homegrown Beans">
+                </div>
+                <div class="promo-bar-text">
+                    <span class="badge bg-danger text-white mb-3">
+                        <i class="bi bi-star-fill me-1"></i>Limited Release
+                    </span>
+                    <h3 class="display-6 fw-bold mb-3">Cruzy Homegrown Beans</h3>
+                    <p class="lead text-muted mb-4">
+                        Exclusive single-origin beans from our private estate. 
+                        Roasted in small batches for the finest flavor profile.
+                    </p>
+                    <a href="{{ url_for('coming_soon') }}" class="btn btn-dark btn-lg">
+                        Pre-Order Now <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar 2: Slides from RIGHT with popup -->
+        <div class="promo-bar promo-bar-right" 
+             data-aos="fade-left" 
+             data-aos-duration="1000" 
+             data-aos-easing="ease-out-cubic"
+             data-aos-once="true"
+             data-aos-delay="200">
+            <div class="promo-bar-content">
+                <div class="promo-bar-text">
+                    <span class="badge bg-info text-white mb-3">
+                        <i class="bi bi-book me-1"></i>New Guide
+                    </span>
+                    <h3 class="display-6 fw-bold mb-3">Brewing Guide for Beginners</h3>
+                    <p class="lead text-muted mb-4">
+                        Learn the fundamentals of coffee brewing. From bean selection 
+                        to the perfect extraction — your journey starts here.
+                    </p>
+                    <a href="{{ url_for('coming_soon') }}" class="btn btn-dark btn-lg">
+                        Read Guide <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                </div>
+                <div class="promo-bar-image">
+                    <img src="{{ url_for('static', filename='img/coffee_tools_home.webp') }}" alt="Brewing Guide">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Product Categories with animations -->
+<section class="container py-5" id="product-categories">
+    <!-- Section Header -->
+    <div class="text-center mb-5" 
+         data-aos="fade-down" 
+         data-aos-duration="600">
+        <h2 class="display-5 fw-bold mb-3">Shop by Category</h2>
+        <p class="lead text-muted">Explore our curated collection of premium coffee products</p>
+    </div>
+
     <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card product-card h-100">
-                <img src="{{ url_for('static', filename='img/coffee_machine_home_pic.webp') }}" class="card-img-top" alt="Machines">
+        <!-- Card 1: Machines -->
+        <div class="col-md-4" 
+             data-aos="zoom-in" 
+             data-aos-duration="700" 
+             data-aos-delay="100">
+            <div class="card product-card category-card h-100">
+                <div class="category-card-img-wrapper">
+                    <img src="{{ url_for('static', filename='img/coffee_machine_home_pic.webp') }}" 
+                         class="card-img-top" 
+                         alt="Machines">
+                    <div class="category-overlay">
+                        <i class="bi bi-cup-hot category-icon"></i>
+                    </div>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">Coffee Machines</h5>
                     <p class="card-text text-muted">Home and prosumer espresso machines.</p>
-                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-modern">
+                    <a href="{{ url_for('machines', category='semi-auto') }}" class="btn btn-modern btn-hover-slide w-100">
                         View Machines <i class="bi bi-arrow-right ms-2"></i>
                     </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card product-card h-100">
-                <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" class="card-img-top" alt="Beans">
+
+        <!-- Card 2: Beans and Capsules (Roastery) -->
+        <div class="col-md-4" 
+             data-aos="zoom-in" 
+             data-aos-duration="700" 
+             data-aos-delay="300">
+            <div class="card product-card category-card h-100">
+                <div class="category-card-img-wrapper">
+                    <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" 
+                         class="card-img-top" 
+                         alt="Beans and Capsules">
+                    <div class="category-overlay">
+                        <i class="bi bi-bag-fill category-icon"></i>
+                    </div>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Coffee Beans</h5>
-                    <p class="card-text text-muted">Single origin & signature blends.</p>
-                    <a href="{{ url_for('beans') }}" class="btn btn-modern">
-                        Browse Beans <i class="bi bi-arrow-right ms-2"></i>
+                    <h5 class="card-title">Beans and Capsules</h5>
+                    <p class="card-text text-muted">Freshly roasted beans & premium coffee capsules.</p>
+                    <a href="{{ url_for('beans') }}" class="btn btn-modern btn-hover-slide w-100">
+                        Browse Roastery <i class="bi bi-arrow-right ms-2"></i>
                     </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card product-card h-100">
-                <img src="{{ url_for('static', filename='img/coffee_tools_home.webp') }}" class="card-img-top" alt="Accessories">
+
+        <!-- Card 3: Accessories -->
+        <div class="col-md-4" 
+             data-aos="zoom-in" 
+             data-aos-duration="700" 
+             data-aos-delay="500">
+            <div class="card product-card category-card h-100">
+                <div class="category-card-img-wrapper">
+                    <img src="{{ url_for('static', filename='img/coffee_tools_home.webp') }}" 
+                         class="card-img-top" 
+                         alt="Accessories">
+                    <div class="category-overlay">
+                        <i class="bi bi-tools category-icon"></i>
+                    </div>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">Accessories</h5>
                     <p class="card-text text-muted">Grinders, tampers, cups & more.</p>
-                    <a href="{{ url_for('accessories') }}" class="btn btn-modern">
+                    <a href="{{ url_for('accessories') }}" class="btn btn-modern btn-hover-slide w-100">
                         See Accessories <i class="bi bi-arrow-right ms-2"></i>
                     </a>
                 </div>
@@ -174,61 +287,67 @@
 </section>
 {% endblock %}
 
+{% block extra_css %}
+<!-- AOS (Animate On Scroll) Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+{% endblock %}
+
 {% block extra_js %}
+<!-- AOS (Animate On Scroll) Library -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Hero Carousel
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        easing: 'ease-out-cubic',
+        once: true,
+        offset: 100,
+        delay: 0,
+    });
+
+    // Hero carousel code
     const slides = document.querySelectorAll('.hero-slide');
     const dots = document.querySelectorAll('.hero-dot');
     const prevBtn = document.querySelector('.hero-arrow-prev');
     const nextBtn = document.querySelector('.hero-arrow-next');
     let currentSlide = 0;
+    const totalSlides = slides.length;
     let autoplayInterval;
 
     function showSlide(index) {
-        // Remove active class from all slides and dots
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-
-        // Add active class to current slide and dot
-        slides[index].classList.add('active');
-        dots[index].classList.add('active');
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            dots[i].classList.remove('active');
+        });
+        
+        if (index >= totalSlides) {
+            currentSlide = 0;
+        } else if (index < 0) {
+            currentSlide = totalSlides - 1;
+        } else {
+            currentSlide = index;
+        }
+        
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
     }
 
     function nextSlide() {
-        currentSlide = (currentSlide + 1) % slides.length;
-        showSlide(currentSlide);
+        showSlide(currentSlide + 1);
     }
 
     function prevSlide() {
-        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-        showSlide(currentSlide);
+        showSlide(currentSlide - 1);
     }
 
     function startAutoplay() {
-        autoplayInterval = setInterval(nextSlide, 7000); // 7 seconds
+        autoplayInterval = setInterval(nextSlide, 5000);
     }
 
     function stopAutoplay() {
         clearInterval(autoplayInterval);
     }
-
-    // Dot navigation
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            currentSlide = index;
-            showSlide(currentSlide);
-            stopAutoplay();
-            startAutoplay(); // Restart autoplay
-        });
-    });
-
-    // Arrow navigation
-    prevBtn.addEventListener('click', () => {
-        prevSlide();
-        stopAutoplay();
-        startAutoplay();
-    });
 
     nextBtn.addEventListener('click', () => {
         nextSlide();
@@ -236,44 +355,59 @@ document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
     });
 
-    // Pause on hover
-    const heroCarousel = document.querySelector('.hero-carousel');
-    heroCarousel.addEventListener('mouseenter', stopAutoplay);
-    heroCarousel.addEventListener('mouseleave', startAutoplay);
+    prevBtn.addEventListener('click', () => {
+        prevSlide();
+        stopAutoplay();
+        startAutoplay();
+    });
+
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            showSlide(index);
+            stopAutoplay();
+            startAutoplay();
+        });
+    });
+
+    // Touch support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.querySelector('.hero-carousel').addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.querySelector('.hero-carousel').addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+            nextSlide();
+            stopAutoplay();
+            startAutoplay();
+        }
+        if (touchEndX > touchStartX + 50) {
+            prevSlide();
+            stopAutoplay();
+            startAutoplay();
+        }
+    }
+
+    // Smooth scroll for "Shop Coffee" button
+    document.querySelector('.scroll-to-categories').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('#product-categories').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+    });
 
     // Start autoplay
     startAutoplay();
 
-    // Smooth scroll to product categories
-    const scrollButton = document.querySelector('.scroll-to-categories');
-    const productCategories = document.getElementById('product-categories');
-    
-    if (scrollButton && productCategories) {
-        scrollButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            productCategories.scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
-            });
-            setTimeout(() => {
-                productCategories.classList.add('animate');
-            }, 500);
-        });
-    }
-
-    // Intersection Observer for product categories
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.2 });
-
-    if (productCategories) {
-        observer.observe(productCategories);
-    }
-});
+    // Pause on hover
+    document.querySelector('.hero-carousel').addEventListener('mouseenter', stopAutoplay);
+    document.querySelector('.hero-carousel').addEventListener('mouseleave', startAutoplay);
 </script>
 {% endblock %}

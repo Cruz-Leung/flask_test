@@ -1948,3 +1948,439 @@ body.site-bg {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ===========================
+   HORIZONTAL PROMO BARS
+=========================== */
+
+.promo-bar {
+    margin: 4rem 0;
+}
+
+.promo-bar-content {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 85%; /* Doesn't stretch full width */
+    transition: all 0.4s ease;
+    transform-origin: center;
+}
+
+.promo-bar-content:hover {
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+}
+
+/* Left-side bar (slides from left, image on left) */
+.promo-bar-left .promo-bar-content {
+    margin-left: 0;
+    margin-right: auto; /* Leaves space on right */
+}
+
+/* Right-side bar (slides from right, image on right) */
+.promo-bar-right .promo-bar-content {
+    margin-left: auto; /* Leaves space on left */
+    margin-right: 0;
+    flex-direction: row-reverse; /* Image on right, text on left */
+}
+
+/* Image section */
+.promo-bar-image {
+    flex: 0 0 45%;
+    height: 400px;
+    overflow: hidden;
+    position: relative;
+}
+
+.promo-bar-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+    pointer-events: none;
+}
+
+.promo-bar-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.promo-bar-content:hover .promo-bar-image img {
+    transform: scale(1.08);
+}
+
+/* Text section */
+.promo-bar-text {
+    flex: 1;
+    padding: 3.5rem 4rem;
+}
+
+.promo-bar-text h3 {
+    color: #1a1a1a;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.promo-bar-text p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+.promo-bar-text .badge {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 50px;
+}
+
+.promo-bar-text .btn {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.promo-bar-text .btn:hover {
+    transform: translateX(5px);
+}
+
+/* Background for section */
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .promo-bar-content {
+        max-width: 95%;
+        flex-direction: column !important;
+    }
+    
+    .promo-bar-left .promo-bar-content,
+    .promo-bar-right .promo-bar-content {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .promo-bar-image {
+        flex: 0 0 100%;
+        height: 350px;
+    }
+    
+    .promo-bar-text {
+        padding: 2.5rem 2rem;
+    }
+    
+    .promo-bar-text h3 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .promo-bar {
+        margin: 2.5rem 0;
+    }
+    
+    .promo-bar_content {
+        max-width: 100%;
+        border-radius: 16px;
+    }
+    
+    .promo-bar-image {
+        height: 280px;
+    }
+    
+    .promo-bar-text {
+        padding: 2rem 1.5rem;
+    }
+    
+    .promo-bar-text h3 {
+        font-size: 1.75rem;
+    }
+    
+    .promo-bar-text p {
+        font-size: 1rem;
+    }
+}
+
+/* ===========================
+   PROMO CARD ANIMATIONS
+=========================== */
+
+.promo-card-hover {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.promo-card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+    z-index: 2;
+}
+
+.promo-card-hover:hover::before {
+    left: 100%;
+}
+
+.promo-card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Badge pulse animation */
+.badge-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+}
+
+/* Button hover slide effect */
+.btn-hover-slide {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-hover-slide::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-hover-slide:hover::before {
+    left: 100%;
+}
+
+.btn-hover-slide:hover {
+    transform: translateX(5px);
+}
+
+.btn-hover-slide i {
+    transition: transform 0.3s ease;
+}
+
+.btn-hover-slide:hover i {
+    transform: translateX(5px);
+}
+
+/* ===========================
+   CATEGORY CARDS ANIMATIONS
+=========================== */
+
+.category-card {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-card:hover {
+    transform: translateY(-12px) rotate(-1deg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.category-card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: 280px;
+}
+
+.category-card-img-wrapper img {
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-card:hover .category-card-img-wrapper img {
+    transform: scale(1.15) rotate(2deg);
+}
+
+/* Category overlay icon */
+.category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.8), rgba(44, 44, 44, 0.6));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.category-card:hover .category-overlay {
+    opacity: 1;
+}
+
+.category-icon {
+    font-size: 4rem;
+    color: #d4a574;
+    transform: scale(0.5) rotate(-45deg);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-card:hover .category-icon {
+    transform: scale(1) rotate(0deg);
+}
+
+/* Category overlay with image icon (for roastery) */
+.category-icon-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    opacity: 0.9;
+    transform: scale(0.5) rotate(-45deg);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-card:hover .category-icon-img {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+}
+
+/* Add golden tint to roastery icon on hover - matches the Bootstrap icons */
+.category-overlay .category-icon-img {
+    filter: brightness(0) saturate(100%) invert(73%) sepia(21%) saturate(726%) hue-rotate(354deg) brightness(92%) contrast(87%);
+}
+
+/* Card body animations */
+.category-card .card-body {
+    padding: 1.75rem;
+    background: linear-gradient(to bottom, white, #fafafa);
+}
+
+.category-card .card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #1a1a1a;
+    transition: color 0.3s ease;
+}
+
+.category-card:hover .card-title {
+    color: #d4a574;
+}
+
+.category-card .card-text {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+
+/* Enhanced button for category cards */
+.category-card .btn-modern {
+    border-radius: 50px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    background: var(--brand-black);
+    color: white;
+    border: none;
+}
+
+.category-card .btn-modern:hover {
+    background: var(--warm-brown);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+.category-card .btn-modern i {
+    transition: transform 0.3s ease;
+}
+
+.category-card .btn-modern:hover i {
+    transform: translateX(5px);
+}
+
+/* Section header animation enhancement */
+#product-categories .display-5 {
+    position: relative;
+    display: inline-block;
+}
+
+#product-categories .display-5::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #d4a574, transparent);
+    transition: width 0.8s ease;
+    animation: expandLine 1.5s ease-out forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes expandLine {
+    to {
+        width: 100%;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .category-card:hover {
+        transform: translateY(-8px);
+    }
+    
+    .category-card-img-wrapper {
+        height: 220px;
+    }
+    
+    .category-icon {
+        font-size: 3rem;
+    }
+    
+    .promo-card-hover:hover {
+        transform: translateY(-4px) scale(1.01);
+    }
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Add spacing between sections */
+section {
+    scroll-margin-top: 80px;
+}
