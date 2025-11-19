@@ -14,6 +14,7 @@ from flask import (
     session
 )
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from pathlib import Path
 from functools import wraps
 from datetime import datetime
@@ -304,87 +305,100 @@ def product_detail(product_id):
 # AUTHENTICATION ROUTES
 # ===========================
 
-@app.route("/register", methods=['GET', 'POST'])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     """User registration"""
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        phone = request.form.get('phone', '').strip()
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        phone = request.form.get("phone")
         
         # Validation
         if not name or not email or not password:
-            flash('Name, email, and password are required.', 'danger')
-            return redirect(url_for('register'))
+            flash("Please fill in all required fields.", "danger")
+            return redirect(url_for("register"))
         
         if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return redirect(url_for('register'))
+            flash("Passwords do not match!", "danger")
+            return redirect(url_for("register"))
         
         if len(password) < 6:
-            flash('Password must be at least 6 characters.', 'danger')
-            return redirect(url_for('register'))
+            flash("Password must be at least 6 characters long.", "danger")
+            return redirect(url_for("register"))
         
-        hashed_password = hash_password(password)
-        
+        # Check if user exists
         conn = get_db_connection()
-        try:
-            conn.execute("""
-                INSERT INTO customers (name, email, password, phone, role)
-                VALUES (?, ?, ?, ?, 'customer')
-            """, (name, email, hashed_password, phone))
-            conn.commit()
-            flash('✅ Account created successfully! Please log in.', 'success')
-            return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash('An account with this email already exists.', 'danger')
-        except Exception as e:
-            flash(f'Error creating account: {e}', 'danger')
-        finally:
+        existing_user = conn.execute("SELECT * FROM customers WHERE email = ?", (email,)).fetchone()
+        
+        if existing_user:
             conn.close()
-    
-    return render_template('register.html', year=datetime.now().year)
-
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    """User login"""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
+            flash("Email already registered. Please log in.", "warning")
+            return redirect(url_for("login"))
         
-        if not email or not password:
-            flash('Email and password are required.', 'danger')
-            return redirect(url_for('login'))
+        # Hash password with salt (bcrypt)
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         
-        hashed_password = hash_password(password)
-        
-        conn = get_db_connection()
-        user = conn.execute("""
-            SELECT * FROM customers WHERE email = ? AND password = ?
-        """, (email, hashed_password)).fetchone()
-        conn.close()
-        
-        if user:
+        # Insert new user
+        try:
+            conn.execute(
+                "INSERT INTO customers (name, email, password, phone) VALUES (?, ?, ?, ?)",
+                (name, email, hashed_password, phone)
+            )
+            conn.commit()
+            
+            # Get the new user
+            user = conn.execute("SELECT * FROM customers WHERE email = ?", (email,)).fetchone()
+            conn.close()
+            
+            # Log the user in
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
-            session['user_role'] = user['role']
             
-            flash(f'Welcome back, {user["name"]}!', 'success')
+            flash(f"Welcome, {name}! Your account has been created.", "success")
+            return redirect(url_for('index'))
             
-            # Redirect based on role
-            if user['role'] in ['admin', 'manager']:
-                return redirect(url_for('admin_orders'))
-            else:
-                next_page = request.args.get('next')
-                return redirect(next_page if next_page else url_for('index'))
-        else:
-            flash('Invalid email or password.', 'danger')
+        except Exception as e:
+            conn.close()
+            flash("An error occurred during registration. Please try again.", "danger")
+            return redirect(url_for("register"))
     
-    return render_template('login.html', year=datetime.now().year)
+    return render_template("register.html", year=datetime.now().year)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """User login"""
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        
+        if not email or not password:
+            flash("Please enter both email and password.", "danger")
+            return redirect(url_for("login"))
+        
+        conn = get_db_connection()
+        user = conn.execute("SELECT * FROM customers WHERE email = ?", (email,)).fetchone()
+        conn.close()
+        
+        # Verify password using check_password_hash (secure comparison with salt)
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            session['user_email'] = user['email']
+            
+            flash(f"Welcome back, {user['name']}!", "success")
+            
+            # Redirect to 'next' page if it exists, otherwise go to index
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        else:
+            flash("Invalid email or password.", "danger")
+            return redirect(url_for("login"))
+    
+    return render_template("login.html", year=datetime.now().year)
 
 
 @app.route("/logout")
@@ -476,6 +490,75 @@ def edit_account():
         return redirect(url_for('logout'))
     
     return render_template('edit_account.html', user=user, year=datetime.now().year)
+
+
+@app.route("/profile/update", methods=["POST"])
+@login_required
+def update_profile():
+    """Update user profile"""
+    user_id = session.get('user_id')
+    
+    name = request.form.get('name')
+    email = request.form.get('email')
+    phone = request.form.get('phone')
+    address = request.form.get('address')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    postcode = request.form.get('postcode')
+    
+    # Password change (optional)
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+    
+    conn = get_db_connection()
+    
+    # If user wants to change password
+    if current_password and new_password:
+        user = conn.execute("SELECT password FROM customers WHERE id = ?", (user_id,)).fetchone()
+        
+        # Verify current password
+        if not check_password_hash(user['password'], current_password):
+            conn.close()
+            flash("Current password is incorrect.", "danger")
+            return redirect(url_for('profile'))
+        
+        if new_password != confirm_new_password:
+            conn.close()
+            flash("New passwords do not match.", "danger")
+            return redirect(url_for('profile'))
+        
+        if len(new_password) < 6:
+            conn.close()
+            flash("New password must be at least 6 characters long.", "danger")
+            return redirect(url_for('profile'))
+        
+        # Hash new password with salt
+        hashed_new_password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
+        
+        # Update with new password
+        conn.execute("""
+            UPDATE customers 
+            SET name = ?, email = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, password = ?
+            WHERE id = ?
+        """, (name, email, phone, address, city, state, postcode, hashed_new_password, user_id))
+    else:
+        # Update without changing password
+        conn.execute("""
+            UPDATE customers 
+            SET name = ?, email = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?
+            WHERE id = ?
+        """, (name, email, phone, address, city, state, postcode, user_id))
+    
+    conn.commit()
+    conn.close()
+    
+    # Update session
+    session['user_name'] = name
+    session['user_email'] = email
+    
+    flash("Profile updated successfully!", "success")
+    return redirect(url_for('profile'))
 
 
 # ===========================
@@ -709,6 +792,7 @@ def view_cart():
 
 # Update the checkout route (around line 650)
 @app.route("/checkout")
+@login_required  # ADD THIS LINE
 def checkout():
     """Display checkout form"""
     cart = session.get('cart', {})
@@ -775,7 +859,12 @@ def checkout():
         if user:
             user_info = {
                 'name': user['name'],
-                'email': user['email']
+                'email': user['email'],
+                'phone': user['phone'] if user['phone'] else '',
+                'address': user['address'] if user['address'] else '',
+                'city': user['city'] if user['city'] else '',
+                'state': user['state'] if user['state'] else '',
+                'postcode': user['postcode'] if user['postcode'] else ''
             }
     
     return render_template('checkout.html',
