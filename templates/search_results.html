@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Cruzy Coffee Co.{% endblock %}
+
+{% block content %}
+<!-- Search Results Header -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-3">Search Results</h1>
+                <p class="lead text-muted">
+                    {% if products %}
+                        Found <strong>{{ products|length }}</strong> result{% if products|length != 1 %}s{% endif %} for "<strong>{{ query }}</strong>"
+                    {% else %}
+                        No results found for "<strong>{{ query }}</strong>"
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-outline-dark w-100" id="searchAgainBtn">
+                    <i class="bi bi-search me-2"></i>Search Again
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Category Filter -->
+{% if products %}
+<section class="container py-4">
+    <div class="d-flex justify-content-center flex-wrap gap-2">
+        <a href="{{ url_for('search', q=query) }}" 
+           class="btn btn-sm {% if not category_filter %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            All Categories
+        </a>
+        <a href="{{ url_for('search', q=query, category='machines') }}" 
+           class="btn btn-sm {% if category_filter == 'machines' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            <i class="bi bi-cup-hot me-1"></i>Machines
+        </a>
+        <a href="{{ url_for('search', q=query, category='beans') }}" 
+           class="btn btn-sm {% if category_filter == 'beans' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            <i class="bi bi-bag-fill me-1"></i>Beans
+        </a>
+        <a href="{{ url_for('search', q=query, category='accessories') }}" 
+           class="btn btn-sm {% if category_filter == 'accessories' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            <i class="bi bi-tools me-1"></i>Accessories
+        </a>
+    </div>
+</section>
+{% endif %}
+
+<!-- Search Results Grid -->
+<section class="container pb-5">
+    {% if products %}
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card product-card h-100">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                    {% if product.image %}
+                    <img src="{{ url_for('static', filename='img/' + product.image) }}" 
+                         class="card-img-top" 
+                         alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
+                         class="card-img-top" 
+                         alt="{{ product.name }}">
+                    {% endif %}
+                </a>
+                
+                <div class="card-body d-flex flex-column">
+                    <!-- Category Badge -->
+                    <span class="badge bg-secondary mb-2 align-self-start">
+                        {{ product.category|title }}
+                    </span>
+                    
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    
+                    {% if product.description %}
+                    <p class="card-text text-muted small flex-grow-1">
+                        {{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        {% if product.discount_percentage and product.discount_percentage > 0 %}
+                        {% set discounted_price = product.price * (1 - product.discount_percentage / 100) %}
+                        <div class="mb-2">
+                            <span class="badge bg-danger mb-2">{{ product.discount_percentage }}% OFF</span>
+                            <br>
+                            <span class="text-decoration-line-through text-muted">
+                                ${{ '%.2f'|format(product.price) }}
+                            </span>
+                            <span class="fw-bold fs-5 text-success ms-2">
+                                ${{ '%.2f'|format(discounted_price) }}
+                            </span>
+                        </div>
+                        {% else %}
+                        <p class="fw-bold fs-5 mb-2">${{ '%.2f'|format(product.price) }}</p>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                               class="btn btn-outline-dark">
+                                View Product
+                            </a>
+                            {% if product.stock and product.stock > 0 %}
+                            <button class="btn btn-dark add-to-cart-btn" 
+                                    data-product-id="{{ product.id }}">
+                                Add to Cart
+                            </button>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>Out of Stock</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No Results Found -->
+    <div class="text-center py-5">
+        <i class="bi bi-search display-1 text-muted mb-3"></i>
+        <h3 class="mb-3">No products found</h3>
+        <p class="text-muted mb-4">Try searching with different keywords or browse our categories:</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('machines') }}" class="btn btn-outline-dark">
+                <i class="bi bi-cup-hot me-2"></i>Coffee Machines
+            </a>
+            <a href="{{ url_for('beans') }}" class="btn btn-outline-dark">
+                <i class="bi bi-bag-fill me-2"></i>Coffee Beans
+            </a>
+            <a href="{{ url_for('accessories') }}" class="btn btn-outline-dark">
+                <i class="bi bi-tools me-2"></i>Accessories
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  console.log('Search results page loaded');
+  console.log('Found {{ products|length }} products for query: "{{ query }}"');
+  
+  // Search again button triggers the navbar search
+  document.getElementById('searchAgainBtn')?.addEventListener('click', function() {
+      document.getElementById('searchIconBtn').click();
+  });
+</script>
+{% endblock %}
