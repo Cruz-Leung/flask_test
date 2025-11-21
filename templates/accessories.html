@@ -4,10 +4,32 @@
 
 {% block content %}
 <!-- Page Header -->
-<section class="py-5 text-center">
+<section class="py-5 text-center bg-light">
     <div class="container">
         <h1 class="display-4 fw-bold">Coffee Accessories</h1>
-        <p class="lead text-muted">Grinders, tampers, cups & essential brewing tools</p>
+        <p class="lead text-muted">Grinders, tampers, scales & essential brewing tools</p>
+    </div>
+</section>
+
+<!-- Category Filter Tabs -->
+<section class="container pb-4 pt-5">
+    <div class="d-flex justify-content-center">
+        <ul class="nav nav-pills category-pills">
+            <li class="nav-item">
+                <a class="nav-link {% if not subcategory or subcategory == 'brewing-equipment' %}active{% endif %}" 
+                   href="{{ url_for('accessories', subcategory='brewing-equipment') }}">
+                    <i class="bi bi-cup-hot me-1"></i>
+                    Brewing Equipment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if subcategory == 'grinders' %}active{% endif %}" 
+                   href="{{ url_for('accessories', subcategory='grinders') }}">
+                    <i class="bi bi-gear-fill me-1"></i>
+                    Grinders
+                </a>
+            </li>
+        </ul>
     </div>
 </section>
 
@@ -37,7 +59,22 @@
                     <p class="card-text text-muted small">{{ product.description }}</p>
                     {% endif %}
                     <div class="mt-auto">
+                        {% if product.discount_percentage and product.discount_percentage > 0 %}
+                        {% set discounted_price = product.price * (1 - product.discount_percentage / 100) %}
+                        <div class="mb-2">
+                            <span class="badge bg-danger mb-2">{{ product.discount_percentage }}% OFF</span>
+                            <br>
+                            <span class="text-decoration-line-through text-muted">
+                                ${{ '%.2f'|format(product.price) }}
+                            </span>
+                            <span class="fw-bold fs-5 text-success ms-2">
+                                ${{ '%.2f'|format(discounted_price) }}
+                            </span>
+                        </div>
+                        {% else %}
                         <p class="fw-bold fs-5 mb-2">${{ '%.2f'|format(product.price) }}</p>
+                        {% endif %}
+                        
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-dark">View Product</a>
                             {% if product.stock and product.stock > 0 %}
@@ -56,7 +93,9 @@
     </div>
     {% else %}
     <div class="text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted mb-3"></i>
         <p class="lead text-muted">No products found in this category.</p>
+        <a href="{{ url_for('accessories') }}" class="btn btn-dark">View All Accessories</a>
     </div>
     {% endif %}
 </section>

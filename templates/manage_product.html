@@ -31,16 +31,18 @@
                             <div class="col-md-6 mb-3">
                                 <label for="category" class="form-label">Category *</label>
                                 <select class="form-select" id="category" name="category" required>
-                                    <option value="">Select Category</option>
+                                    <option value="">-- Select Category --</option>
                                     <option value="machines">Machines</option>
                                     <option value="beans">Beans</option>
                                     <option value="accessories">Accessories</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="subcategory" class="form-label">Subcategory</label>
-                                <input type="text" class="form-control" id="subcategory" name="subcategory" 
-                                       placeholder="e.g., semi-auto, pod, fully-auto">
+                                <label for="subcategory" class="form-label">Subcategory *</label>
+                                <select class="form-select" id="subcategory" name="subcategory" required disabled>
+                                    <option value="">-- Select Category First --</option>
+                                </select>
+                                <small class="text-muted" id="subcategory-hint">Choose a category to see subcategories</small>
                             </div>
                         </div>
 
@@ -55,6 +57,13 @@
                                 <input type="number" class="form-control" id="stock" name="stock" 
                                        min="0" value="0" required>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discount_percentage" class="form-label">Discount Percentage (%)</label>
+                            <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" 
+                                   step="1" min="0" max="100" value="0">
+                            <small class="text-muted">Optional: Enter 0-100 for percentage discount</small>
                         </div>
 
                         <div class="mb-3">
@@ -80,4 +89,67 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Subcategory options for each category
+    const subcategoryOptions = {
+        'machines': [
+            { value: 'semi-auto', label: 'Semi-Automatic' },
+            { value: 'auto', label: 'Automatic' },
+            { value: 'manual', label: 'Manual' }
+        ],
+        'beans': [
+            { value: 'coffee-beans', label: 'Coffee Beans' },
+            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' }
+        ],
+        'accessories': [
+            { value: 'brewing-equipment', label: 'Brewing Equipment' },
+            { value: 'grinders', label: 'Grinders' }
+        ]
+    };
+
+    // Get form elements
+    const categorySelect = document.getElementById('category');
+    const subcategorySelect = document.getElementById('subcategory');
+    const subcategoryHint = document.getElementById('subcategory-hint');
+
+    // Function to update subcategory dropdown based on category
+    function updateSubcategoryOptions() {
+        const selectedCategory = categorySelect.value;
+        
+        // Clear existing options
+        subcategorySelect.innerHTML = '';
+        
+        if (selectedCategory && subcategoryOptions[selectedCategory]) {
+            // Add subcategory options for selected category
+            subcategoryOptions[selectedCategory].forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                subcategorySelect.appendChild(optionElement);
+            });
+            
+            subcategorySelect.disabled = false;
+            subcategoryHint.textContent = `Select a subcategory for ${selectedCategory}`;
+        } else {
+            // No category selected
+            const placeholderOption = document.createElement('option');
+            placeholderOption.value = '';
+            placeholderOption.textContent = '-- Select Category First --';
+            subcategorySelect.appendChild(placeholderOption);
+            subcategorySelect.disabled = true;
+            subcategoryHint.textContent = 'Choose a category to see subcategories';
+        }
+    }
+
+    // Update subcategory options when category changes
+    categorySelect.addEventListener('change', updateSubcategoryOptions);
+
+    // Initialize subcategory dropdown on page load
+    updateSubcategoryOptions();
+
+    console.log('Add product page loaded - subcategory system initialized');
+</script>
 {% endblock %}

@@ -147,8 +147,10 @@
 
                         <div class="mb-3">
                             <label for="subcategory" class="form-label">Subcategory</label>
-                            <input type="text" class="form-control form-control-sm" id="subcategory" name="subcategory" 
-                                   value="{{ product.subcategory or '' }}">
+                            <select class="form-select form-select-sm" id="subcategory" name="subcategory" required>
+                                <option value="">-- Select Category First --</option>
+                            </select>
+                            <small class="text-muted" id="subcategory-hint">Choose a category to see subcategories</small>
                         </div>
 
                         <div class="row">
@@ -243,7 +245,73 @@
 </style>
 
 <script>
-    // Prevent row click when interacting with form elements (if any added later)
+    // Subcategory options for each category
+    const subcategoryOptions = {
+        'machines': [
+            { value: 'semi-auto', label: 'Semi-Automatic' },
+            { value: 'auto', label: 'Automatic' },
+            { value: 'manual', label: 'Manual' }
+        ],
+        'beans': [
+            { value: 'coffee-beans', label: 'Coffee Beans' },
+            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' }
+        ],
+        'accessories': [
+            { value: 'brewing-equipment', label: 'Brewing Equipment' },
+            { value: 'grinders', label: 'Grinders' }
+        ]
+    };
+
+    // Get form elements
+    const categorySelect = document.getElementById('category');
+    const subcategorySelect = document.getElementById('subcategory');
+    const subcategoryHint = document.getElementById('subcategory-hint');
+
+    // Store the current subcategory value (for edit mode)
+    const currentSubcategory = "{{ product.subcategory if product else '' }}";
+
+    // Function to update subcategory dropdown based on category
+    function updateSubcategoryOptions() {
+        const selectedCategory = categorySelect.value;
+        
+        // Clear existing options
+        subcategorySelect.innerHTML = '';
+        
+        if (selectedCategory && subcategoryOptions[selectedCategory]) {
+            // Add subcategory options for selected category
+            subcategoryOptions[selectedCategory].forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                
+                // Select current subcategory if editing
+                if (option.value === currentSubcategory) {
+                    optionElement.selected = true;
+                }
+                
+                subcategorySelect.appendChild(optionElement);
+            });
+            
+            subcategorySelect.disabled = false;
+            subcategoryHint.textContent = `Select a subcategory for ${selectedCategory}`;
+        } else {
+            // No category selected
+            const placeholderOption = document.createElement('option');
+            placeholderOption.value = '';
+            placeholderOption.textContent = '-- Select Category First --';
+            subcategorySelect.appendChild(placeholderOption);
+            subcategorySelect.disabled = true;
+            subcategoryHint.textContent = 'Choose a category to see subcategories';
+        }
+    }
+
+    // Update subcategory options when category changes
+    categorySelect.addEventListener('change', updateSubcategoryOptions);
+
+    // Initialize subcategory dropdown on page load
+    updateSubcategoryOptions();
+
+    // Prevent row click when interacting with form elements
     document.querySelectorAll('.product-row').forEach(row => {
         row.addEventListener('click', function(e) {
             // Allow normal link/button behavior if they exist

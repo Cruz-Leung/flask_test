@@ -251,17 +251,31 @@ def beans(subcategory=None):
     )
 
 @app.route("/accessories")
-def accessories():
-    """Display coffee accessories"""
+@app.route("/accessories/<subcategory>")
+def accessories(subcategory=None):
+    """Display accessories with optional subcategory filter"""
     conn = get_db_connection()
-    products = conn.execute(
-        "SELECT * FROM products WHERE category = 'accessories' ORDER BY name"
-    ).fetchall()
+    
+    if subcategory:
+        # Filter by subcategory
+        products = conn.execute(
+            "SELECT * FROM products WHERE category = 'accessories' AND subcategory = ? ORDER BY name",
+            (subcategory,)
+        ).fetchall()
+    else:
+        # Show all accessories (default to brewing-equipment)
+        subcategory = 'brewing-equipment'
+        products = conn.execute(
+            "SELECT * FROM products WHERE category = 'accessories' AND subcategory = ? ORDER BY name",
+            (subcategory,)
+        ).fetchall()
+    
     conn.close()
     
     return render_template(
         "accessories.html",
         products=products,
+        subcategory=subcategory,
         year=datetime.now().year
     )
 
@@ -1686,6 +1700,52 @@ def cart_items_api():
 def coming_soon():
     """Coming soon page"""
     return render_template("coming_soon.html", year=datetime.now().year)
+
+@app.route("/search")
+def search():
+    """Search products by keyword"""
+    query = request.args.get('q', '').strip()
+    category_filter = request.args.get('category', '')
+    
+    if not query:
+        flash("Please enter a search term.", "warning")
+        return redirect(url_for('index'))
+    
+    conn = get_db_connection()
+    
+    # Build the SQL query
+    sql = '''
+        SELECT * FROM products 
+        WHERE (
+            name LIKE ? OR 
+            sku LIKE ? OR 
+            description LIKE ? OR 
+            brand LIKE ? OR
+            category LIKE ? OR
+            subcategory LIKE ?
+        )
+    '''
+    
+    search_term = f'%{query}%'
+    params = [search_term] * 6
+    
+    # Add category filter if specified
+    if category_filter:
+        sql += ' AND category = ?'
+        params.append(category_filter)
+    
+    sql += ' ORDER BY name'
+    
+    products = conn.execute(sql, params).fetchall()
+    conn.close()
+    
+    return render_template(
+        'search_results.html',
+        query=query,
+        products=products,
+        category_filter=category_filter,
+        year=datetime.now().year
+    )
 
 
 if __name__ == "__main__":

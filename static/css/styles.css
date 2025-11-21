@@ -1917,6 +1917,78 @@ body.site-bg {
     }
 }
 
+/* ===========================
+   CATEGORY PILLS (ALL PAGES)
+=========================== */
+
+.category-pills {
+    background: white;
+    border-radius: 50px;
+    padding: 0.35rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid #e9ecef;
+    display: inline-flex;
+}
+
+.category-pills .nav-link {
+    border-radius: 50px;
+    color: #666;
+    font-weight: 500;
+    padding: 0.65rem 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.category-pills .nav-link:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+.category-pills .nav-link.active {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.category-pills .nav-link i {
+    font-size: 1rem;
+    margin-right: 0.35rem;
+}
+
+/* Responsive category pills */
+@media (max-width: 768px) {
+    .category-pills {
+        max-width: 100%;
+        padding: 0.25rem;
+    }
+    
+    .category-pills .nav-link {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.8rem;
+    }
+    
+    .category-pills .nav-link i {
+        font-size: 0.9rem;
+        margin-right: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .category-pills .nav-link {
+        padding: 0.45rem 0.65rem;
+        font-size: 0.75rem;
+    }
+    
+    .category-pills .nav-link i {
+        display: none; /* Hide icons on very small screens */
+    }
+}
+
 /* Mini cart delete button */
 .mini-cart-delete-btn {
     padding: 0.25rem 0.5rem;
@@ -2599,4 +2671,63 @@ section.container.py-5 {
 section.container-fluid.py-5.bg-light {
     padding-top: 2.5rem !important;
     padding-bottom: 2.5rem !important;
+}
+
+/* ===========================
+   SEARCH BAR
+=========================== */
+
+.search-form {
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.search-input {
+    border-radius: 50px 0 0 50px;
+    border: 2px solid #e9ecef;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #1a1a1a;
+    box-shadow: 0 0 0 0.2rem rgba(26, 26, 26, 0.1);
+}
+
+.search-btn {
+    border-radius: 0 50px 50px 0;
+    border: 2px solid #1a1a1a;
+    border-left: none;
+    padding: 0.5rem 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    background: #1a1a1a;
+    color: white;
+    transform: translateX(2px);
+}
+
+/* Search Results Styling */
+.search-results-header {
+    background: linear-gradient(135deg, #f5f5f5 0%, #e9ecef 100%);
+}
+
+/* Responsive Search Bar */
+@media (max-width: 991px) {
+    .search-form {
+        width: 100%;
+        max-width: none;
+        margin: 1rem 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-input {
+        font-size: 0.875rem;
+    }
+    
+    .search-btn {
+        padding: 0.5rem 1rem;
+    }
 }

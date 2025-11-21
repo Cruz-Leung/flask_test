@@ -137,14 +137,44 @@
                         </div>
                     </li>
 
-                    <!-- Accessories -->
-                    <li class="nav-item nav-item-icon px-3">
-                        <a class="nav-link {% if request.endpoint == 'accessories' %}active{% endif %}" href="{{ url_for('accessories') }}">
+                    <!-- Accessories Dropdown (MEGA DROPDOWN) -->
+                    <li class="nav-item nav-item-icon dropdown dropdown-mega px-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="accessoriesDropdown" role="button" 
+                           data-bs-toggle="dropdown" data-bs-auto-close="outside">
                             <div class="nav-icon">
                                 <i class="bi bi-tools"></i>
                             </div>
                             <span class="nav-text">Accessories</span>
                         </a>
+                        <div class="dropdown-menu dropdown-menu-mega">
+                            <div class="container py-4">
+                                <div class="row g-4">
+                                    <!-- Brewing Equipment -->
+                                    <div class="col-md-6">
+                                        <a href="{{ url_for('accessories', subcategory='brewing-equipment') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/brewing_equipment_dropdown.jpg') }}" 
+                                                     alt="Brewing Equipment">
+                                            </div>
+                                            <h5>Brewing Equipment</h5>
+                                            <p>Tampers, scales, pitchers & tools</p>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Grinders -->
+                                    <div class="col-md-6">
+                                        <a href="{{ url_for('accessories', subcategory='grinders') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/grinders_dropdown.jpg') }}" 
+                                                     alt="Grinders">
+                                            </div>
+                                            <h5>Grinders</h5>
+                                            <p>Manual & electric coffee grinders</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </li>
 
                     <!-- About -->
@@ -157,6 +187,21 @@
                         </a>
                     </li>
                 </ul>
+
+                <!-- Search Bar (CENTERED) -->
+                <form class="d-flex mx-3 search-form" role="search" action="{{ url_for('search') }}" method="GET">
+                    <div class="input-group">
+                        <input class="form-control form-control-sm search-input" 
+                               type="search" 
+                               name="q" 
+                               placeholder="Search products..." 
+                               aria-label="Search"
+                               value="{{ request.args.get('q', '') }}">
+                        <button class="btn btn-outline-dark btn-sm search-btn" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
 
                 <!-- Right-aligned: Role-based menu + Account + Cart -->
                 <ul class="navbar-nav ms-auto">
