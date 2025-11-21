@@ -328,7 +328,7 @@
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
     
 
-     <!-- Expanding Search Bar Script -->
+         <!-- Expanding Search Bar Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchContainer = document.getElementById('searchContainer');
@@ -336,11 +336,17 @@
             const searchForm = searchContainer.querySelector('.search-form-expanding');
             const searchInput = document.getElementById('searchInputExpanding');
             
+            // Create backdrop
+            const backdrop = document.createElement('div');
+            backdrop.className = 'search-backdrop';
+            document.body.appendChild(backdrop);
+            
             // Toggle search bar
             searchIconBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 searchContainer.classList.add('active');
                 searchForm.classList.add('active');
+                backdrop.classList.add('active');
                 
                 // Focus input after animation
                 setTimeout(() => {
@@ -348,13 +354,12 @@
                 }, 400);
             });
             
-            // Close search when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!searchContainer.contains(e.target)) {
-                    searchContainer.classList.remove('active');
-                    searchForm.classList.remove('active');
-                    searchInput.value = '';
-                }
+            // Close search when clicking backdrop
+            backdrop.addEventListener('click', function() {
+                searchContainer.classList.remove('active');
+                searchForm.classList.remove('active');
+                backdrop.classList.remove('active');
+                searchInput.value = '';
             });
             
             // Prevent closing when clicking inside search
@@ -367,6 +372,7 @@
                 if (e.key === 'Escape' && searchForm.classList.contains('active')) {
                     searchContainer.classList.remove('active');
                     searchForm.classList.remove('active');
+                    backdrop.classList.remove('active');
                     searchInput.value = '';
                 }
             });

@@ -6,23 +6,14 @@
 <!-- Search Results Header -->
 <section class="py-5 bg-light">
     <div class="container">
-        <div class="row">
-            <div class="col-md-8">
-                <h1 class="display-5 fw-bold mb-3">Search Results</h1>
-                <p class="lead text-muted">
-                    {% if products %}
-                        Found <strong>{{ products|length }}</strong> result{% if products|length != 1 %}s{% endif %} for "<strong>{{ query }}</strong>"
-                    {% else %}
-                        No results found for "<strong>{{ query }}</strong>"
-                    {% endif %}
-                </p>
-            </div>
-            <div class="col-md-4">
-                <button class="btn btn-outline-dark w-100" id="searchAgainBtn">
-                    <i class="bi bi-search me-2"></i>Search Again
-                </button>
-            </div>
-        </div>
+        <h1 class="display-5 fw-bold mb-3">Search Results</h1>
+        <p class="lead text-muted">
+            {% if products %}
+                Found <strong>{{ products|length }}</strong> result{% if products|length != 1 %}s{% endif %} for "<strong>{{ query }}</strong>"
+            {% else %}
+                No results found for "<strong>{{ query }}</strong>"
+            {% endif %}
+        </p>
     </div>
 </section>
 
@@ -147,9 +138,5 @@
   console.log('Search results page loaded');
   console.log('Found {{ products|length }} products for query: "{{ query }}"');
   
-  // Search again button triggers the navbar search
-  document.getElementById('searchAgainBtn')?.addEventListener('click', function() {
-      document.getElementById('searchIconBtn').click();
-  });
 </script>
 {% endblock %}
