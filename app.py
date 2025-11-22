@@ -628,14 +628,16 @@ def cart_add(product_id):
         # Create cart key
         cart_key = str(product_id)
         
-        # Add or update item in cart
+        # Add or update item in cart - NOW WITH NAME AND IMAGE
         if cart_key in session['cart']:
             session['cart'][cart_key]['quantity'] += quantity
         else:
             session['cart'][cart_key] = {
                 'product_id': product_id,
+                'name': product['name'],              # ADD THIS
+                'image': product['image'],            # ADD THIS
                 'quantity': quantity,
-                'price': final_price,  # Store the final discounted price
+                'price': final_price,
                 'original_price': original_price,
                 'discount_percentage': discount_percentage
             }
@@ -648,7 +650,7 @@ def cart_add(product_id):
         
         return jsonify({
             'success': True,
-            'message': 'Item added to cart',
+            'message': f'Added {product["name"]} to cart',
             'cart_count': cart_count
         })
         
