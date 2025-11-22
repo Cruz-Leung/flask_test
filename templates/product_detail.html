@@ -32,13 +32,11 @@
                 {% if product.image %}
                 <img src="{{ url_for('static', filename='img/' + product.image) }}" 
                      class="card-img-top" 
-                     alt="{{ product.name }}"
-                     style="border-radius: 1rem; max-height: 500px; object-fit: cover;">
+                     alt="{{ product.name }}">
                 {% else %}
                 <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" 
                      class="card-img-top" 
-                     alt="{{ product.name }}"
-                     style="border-radius: 1rem; max-height: 500px; object-fit: cover;">
+                     alt="{{ product.name }}">
                 {% endif %}
             </div>
 
@@ -123,7 +121,7 @@
             </div>
             {% endif %}
         </div>
-
+        
         <!-- Product Details -->
         <div class="col-lg-6">
             <div class="product-detail-info">
@@ -167,19 +165,39 @@
                     {% endif %}
                 </div>
 
-                <!-- SKU and Stock -->
+                <!-- SKU and Stock (Admin/Manager Only) -->
+                {% if session.user_role in ['admin', 'manager'] %}
                 <div class="mb-4">
                     <p class="text-muted mb-1">
                         <strong>SKU:</strong> {{ product.sku }}
                     </p>
                     <p class="mb-0">
-                        <strong>Availability:</strong>
+                        <strong>Stock Level:</strong>
                         {% if product.stock > 10 %}
                         <span class="badge bg-success">In Stock ({{ product.stock }} available)</span>
                         {% elif product.stock > 0 %}
                         <span class="badge bg-warning text-dark">Low Stock ({{ product.stock }} left)</span>
                         {% else %}
                         <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <hr class="my-4">
+                {% endif %}
+
+                <!-- Availability (All Users) -->
+                <div class="mb-4">
+                    <p class="mb-0">
+                        <strong>Availability:</strong>
+                        {% if product.stock > 0 %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>In Stock
+                        </span>
+                        {% else %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle me-1"></i>Out of Stock
+                        </span>
                         {% endif %}
                     </p>
                 </div>
@@ -193,8 +211,8 @@
                         {{ product.description if product.description else 'No description available.' }}
                     </p>
                 </div>
-
                 <hr class="my-4">
+
 
                 <!-- Quantity Selector and Add to Cart -->
                 {% if product.stock > 0 %}

@@ -18,8 +18,13 @@
                     <form method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="sku" class="form-label">SKU *</label>
-                            <input type="text" class="form-control" id="sku" name="sku" required>
-                            <small class="text-muted">Unique product identifier</small>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="sku" 
+                                   name="sku" 
+                                   oninput="this.value = this.value.toUpperCase()" 
+                                   required>
+                            <small class="text-muted">Unique product identifier (automatically converted to uppercase)</small>
                         </div>
 
                         <div class="mb-3">

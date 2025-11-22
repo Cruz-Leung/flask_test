@@ -29,7 +29,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 STATIC_IMG_DIR = Path(__file__).parent / "static" / "img"
 STATIC_DIR = Path(__file__).parent / 'static'
 STATIC_JS_DIR = STATIC_DIR / 'js'
-ALLOWED_EXT = {"png", "jpeg", "webp", "gif", "avif"} 
+ALLOWED_EXT = {"png", "jpeg", "webp", "gif", "avif", "jpg"} 
 
 # Verify static folder exists
 STATIC_JS_DIR.mkdir(parents=True, exist_ok=True)
@@ -327,6 +327,57 @@ def accessories(subcategory=None):
 @app.route("/about")
 def about():
     return render_template("about.html", year=datetime.now().year)
+
+@app.route("/report-bug", methods=['GET', 'POST'])
+def report_bug():
+    """Bug report page - requires login"""
+    # Check if user is logged in
+    if 'user_id' not in session:
+        flash("⚠️ Please sign in to report a bug.", "warning")
+        return redirect(url_for('login', next=request.url))
+    
+    if request.method == 'POST':
+        bug_title = request.form.get('bug_title')
+        bug_category = request.form.get('bug_category')
+        bug_description = request.form.get('bug_description')
+        bug_device = request.form.get('bug_device', 'Not specified')
+        bug_severity = request.form.get('bug_severity', 'medium')
+        
+        user_id = session.get('user_id')
+        username = session.get('username')
+        
+        conn = get_db_connection()
+        
+        # Create bug_reports table if it doesn't exist
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS bug_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                username TEXT NOT NULL,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL,
+                description TEXT NOT NULL,
+                device TEXT,
+                severity TEXT NOT NULL,
+                status TEXT DEFAULT 'open',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
+        # Insert bug report
+        conn.execute('''
+            INSERT INTO bug_reports (user_id, username, title, category, description, device, severity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, username, bug_title, bug_category, bug_description, bug_device, bug_severity))
+        
+        conn.commit()
+        conn.close()
+        
+        flash(f"✅ Thank you, {username}! Your bug report has been submitted successfully.", "success")
+        return redirect(url_for('about'))
+    
+    return render_template('report_bug.html', year=datetime.now().year)
 
 @app.route("/terms")
 def terms():

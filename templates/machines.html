@@ -125,6 +125,21 @@ function renderProducts(category) {
             ? product.price * (1 - product.discount_percentage / 100)
             : product.price;
         
+        // Subcategory badge helper
+        let subcategoryBadge = '';
+        if (product.subcategory) {
+            if (product.subcategory === 'semi-auto') {
+                subcategoryBadge = '<i class="bi bi-gear-fill me-1"></i>Semi-Automatic';
+            } else if (product.subcategory === 'fully-auto') {
+                subcategoryBadge = '<i class="bi bi-robot me-1"></i>Fully Automatic';
+            } else if (product.subcategory === 'pod') {
+                subcategoryBadge = '<i class="bi bi-cup-straw me-1"></i>Pod Machine';
+            } else {
+                subcategoryBadge = product.subcategory.replace('-', ' ').split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            }
+        }
+        
         return `
             <div class="col-md-6 col-lg-4">
                 <div class="card product-card h-100">
@@ -136,6 +151,12 @@ function renderProducts(category) {
                         ${hasDiscount ? `
                             <span class="badge bg-warning text-dark mb-2 align-self-start">
                                 <i class="bi bi-tag-fill me-1"></i>${product.discount_percentage}% OFF
+                            </span>
+                        ` : ''}
+                        
+                        ${product.subcategory ? `
+                            <span class="badge bg-secondary mb-2 align-self-start">
+                                ${subcategoryBadge}
                             </span>
                         ` : ''}
                         

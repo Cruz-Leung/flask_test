@@ -119,14 +119,21 @@
                     
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="old_sku" value="{{ product.sku }}">
-
+                        
                         <div class="mb-3">
                             <label for="sku" class="form-label">SKU</label>
-                            <input type="text" class="form-control form-control-sm" id="sku" name="sku" 
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   id="sku" 
+                                   name="sku" 
                                    value="{{ product.sku }}" 
-                                   {% if session.user_role != 'manager' %}readonly{% endif %} required>
+                                   oninput="this.value = this.value.toUpperCase()"
+                                   {% if session.user_role != 'manager' %}readonly{% endif %} 
+                                   required>
                             {% if session.user_role != 'manager' %}
                             <small class="text-muted">Only managers can change SKU</small>
+                            {% else %}
+                            <small class="text-muted">Automatically converted to uppercase</small>
                             {% endif %}
                         </div>
 

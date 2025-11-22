@@ -16,4 +16,63 @@
         </div>
     </div>
 </section>
+
+<!-- Contact & Bug Report Section -->
+<section class="container py-5">
+    <div class="row g-4">
+        <!-- Contact Us Box -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-envelope-fill text-primary me-3" style="font-size: 2rem;"></i>
+                        <h3 class="mb-0">Business Enquiries</h3>
+                    </div>
+                    <p class="text-muted mb-3">
+                        For partnership opportunities, wholesale orders, or general business enquiries, please reach out to us.
+                    </p>
+                    <div class="alert alert-light border">
+                        <i class="bi bi-envelope me-2"></i>
+                        <strong>Email:</strong> 
+                        <a href="mailto:cruzleung@gmail.com" class="text-decoration-none">
+                            cruzleung@gmail.com
+                        </a>
+                    </div>
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-clock me-1"></i>
+                        We typically respond within 1-2 business days.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report a Bug Box -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-bug-fill text-danger me-3" style="font-size: 2rem;"></i>
+                        <h3 class="mb-0">Report a Bug</h3>
+                    </div>
+                    <p class="text-muted mb-3">
+                        Found a bug or issue on our website? Help us improve by reporting it!
+                    </p>
+                    <div class="alert alert-info border-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        You must be signed in to submit a bug report.
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('report_bug') }}" class="btn btn-danger btn-lg">
+                            <i class="bi bi-bug me-2"></i>Report a Bug
+                        </a>
+                    </div>
+                    <p class="small text-muted mt-3 mb-0">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Your feedback helps us maintain a better experience for everyone.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
