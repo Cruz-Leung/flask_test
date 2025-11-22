@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Cruzy Coffee Co.{% endblock %}</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Premium coffee beans, machines, and accessories. Shop the finest coffee products online with fast delivery.">
+    <meta name="theme-color" content="#2c2c2c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cruzy Coffee">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/pwa-icon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/pwa-icon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/pwa-icon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="167x167" href="{{ url_for('static', filename='img/pwa-icon-192.png') }}">
+    
+    <!-- Favicon for Browser Tab -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/coffee_logo.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/coffee_logo.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/coffee_logo.png') }}">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
@@ -296,6 +318,13 @@
                         </li>
                     {% endif %}
 
+                    <!-- PWA Install Button -->
+                    <li class="nav-item">
+                        <button id="pwa-install-btn" class="btn btn-sm btn-dark me-2" style="display: none;">
+                            <i class="bi bi-download me-1"></i>Install App
+                        </button>
+                    </li>
+
                     <!-- Shopping Cart with Mini Cart -->
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative" href="#" id="cartDropdown" role="button" 
@@ -433,6 +462,206 @@ document.addEventListener('DOMContentLoaded', function() {
         once: true,
         offset: 100
     });
+</script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered successfully:', registration.scope);
+                    
+                    // Check for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('🔄 New Service Worker available');
+                    });
+                })
+                .catch(error => {
+                    console.log('❌ Service Worker registration failed:', error);
+                });
+        });
+        
+        // Listen for Service Worker updates
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            console.log('♻️ Reloading page for update...');
+        });
+    }
+    
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installButton = document.getElementById('pwa-install-btn');
+    let promptAvailable = false;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('💾 Install prompt available');
+        e.preventDefault();
+        deferredPrompt = e;
+        promptAvailable = true;
+        
+        // Show install button
+        if (installButton) {
+            installButton.style.display = 'block';
+            installButton.innerHTML = '<i class="bi bi-download me-1"></i>Install App';
+        }
+    });
+    
+    // Detect browser type for fallback instructions
+    function getBrowserName() {
+        const userAgent = navigator.userAgent;
+        if (userAgent.includes('Arc')) return 'Arc';
+        if (userAgent.includes('Edg')) return 'Edge';
+        if (userAgent.includes('Chrome')) return 'Chrome';
+        if (userAgent.includes('Firefox')) return 'Firefox';
+        if (userAgent.includes('Safari')) return 'Safari';
+        return 'Unknown';
+    }
+    
+    // Show install button for PWA-capable browsers even without beforeinstallprompt
+    window.addEventListener('load', () => {
+        const browser = getBrowserName();
+        
+        // If no prompt fired after 3 seconds, show button with instructions
+        setTimeout(() => {
+            if (!promptAvailable && installButton) {
+                // Check if app is already installed
+                if (window.matchMedia('(display-mode: standalone)').matches) {
+                    console.log('App is already installed');
+                    return;
+                }
+                
+                // Show button with browser-specific instructions
+                installButton.style.display = 'block';
+                installButton.innerHTML = '<i class="bi bi-phone me-1"></i>Install';
+            }
+        }, 3000);
+    });
+    
+    // Handle install button click
+    if (installButton) {
+        installButton.addEventListener('click', async () => {
+            const browser = getBrowserName();
+            
+            // If standard prompt is available (Chrome, Edge)
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                if (outcome === 'accepted') {
+                    installButton.style.display = 'none';
+                }
+            } 
+            // Fallback: Show browser-specific instructions
+            else {
+                let instructions = '';
+                
+                if (browser === 'Arc') {
+                    instructions = `
+                        <div style="max-width: 400px;">
+                            <h5>Install Cruzy Coffee App on Arc</h5>
+                            <ol class="text-start">
+                                <li>Click the <strong>•••</strong> menu (top right)</li>
+                                <li>Select <strong>"File"</strong></li>
+                                <li>Choose <strong>"Add as App"</strong> or <strong>"Install Site as App"</strong></li>
+                                <li>Click <strong>"Install"</strong></li>
+                            </ol>
+                            <p class="small text-muted">Or use the keyboard shortcut: <kbd>Cmd+I</kbd> (Mac)</p>
+                        </div>
+                    `;
+                } else if (browser === 'Safari') {
+                    instructions = `
+                        <div style="max-width: 400px;">
+                            <h5>Install on Safari (iOS/Mac)</h5>
+                            <ol class="text-start">
+                                <li>Tap the <strong>Share</strong> button <i class="bi bi-square-arrow-up"></i></li>
+                                <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                                <li>Tap <strong>"Add"</strong></li>
+                            </ol>
+                        </div>
+                    `;
+                } else if (browser === 'Firefox') {
+                    instructions = `
+                        <div style="max-width: 400px;">
+                            <h5>Install on Firefox</h5>
+                            <ol class="text-start">
+                                <li>Look for the <strong>⊕</strong> icon in the address bar</li>
+                                <li>Or go to menu → <strong>"Install"</strong></li>
+                            </ol>
+                            <p class="small text-muted">Note: PWA support varies by Firefox version</p>
+                        </div>
+                    `;
+                } else {
+                    instructions = `
+                        <div style="max-width: 400px;">
+                            <h5>Install as App</h5>
+                            <p>Look for an install icon (<strong>⊕</strong>) in your browser's address bar, or:</p>
+                            <ol class="text-start">
+                                <li>Open your browser's menu</li>
+                                <li>Look for <strong>"Install"</strong>, <strong>"Add to Home Screen"</strong>, or <strong>"Create Shortcut"</strong></li>
+                            </ol>
+                        </div>
+                    `;
+                }
+                
+                // Create and show modal with instructions
+                const modalHtml = `
+                    <div class="modal fade" id="installInstructionsModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="bi bi-phone me-2"></i>Install Cruzy Coffee
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    ${instructions}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Remove existing modal if any
+                const existingModal = document.getElementById('installInstructionsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // Add modal to page
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('installInstructionsModal'));
+                modal.show();
+            }
+        });
+    }
+    
+    // Track if app was installed
+    window.addEventListener('appinstalled', () => {
+        console.log('✅ PWA installed successfully!');
+        deferredPrompt = null;
+        if (installButton) {
+            installButton.style.display = 'none';
+        }
+    });
+    
+    // Hide button if already running as installed app
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('✅ Running as installed app');
+        if (installButton) {
+            installButton.style.display = 'none';
+        }
+    }
 </script>
 
     {% block extra_js %}{% endblock %}

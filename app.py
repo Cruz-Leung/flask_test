@@ -38,6 +38,7 @@ print(f"Static folder: {STATIC_DIR}")
 print(f"JS folder: {STATIC_JS_DIR}")
 print(f"cart.js exists: {(STATIC_JS_DIR / 'cart.js').exists()}")
 
+
 def get_db_connection():
     conn = sqlite3.connect('store.db')
     conn.row_factory = sqlite3.Row
@@ -2389,6 +2390,12 @@ def search():
                          category_filter=category_filter,
                          suggestions=suggestions,
                          year=datetime.now().year)
+
+
+@app.route("/manifest.json")
+def manifest():
+    """Serve PWA manifest"""
+    return app.send_static_file('manifest.json')
 
 if __name__ == "__main__":
     init_db()
