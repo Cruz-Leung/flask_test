@@ -103,14 +103,62 @@
 
 {% block extra_js %}
 <script>
-  console.log('Accessories page loaded!');
-  console.log('Cart object:', typeof Cart);
-  console.log('MiniCart object:', typeof MiniCart);
-  
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded on accessories page');
-    const buttons = document.querySelectorAll('.add-to-cart-btn');
-    console.log('Found', buttons.length, 'add-to-cart buttons');
-  });
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Accessories page loaded!');
+    
+    // Add to cart functionality for accessories page
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    console.log('Found', addToCartButtons.length, 'add-to-cart buttons');
+    
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantity = 1;
+            
+            console.log('Adding product', productId, 'to cart');
+            
+            this.disabled = true;
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding...';
+            
+            try {
+                const response = await fetch(`/cart/add/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ quantity: quantity })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Added!';
+                    this.classList.remove('btn-dark');
+                    this.classList.add('btn-success');
+                    
+                    // Update MiniCart if available
+                    if (window.MiniCart) {
+                        window.MiniCart.updateCartCount();
+                    }
+                    
+                    // Reload page to refresh cart count - SAME AS MACHINES.HTML
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert(data.message || 'Error adding to cart');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error adding to cart. Please try again.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    });
+});
 </script>
 {% endblock %}

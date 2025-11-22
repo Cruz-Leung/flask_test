@@ -141,9 +141,9 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Accessories page loaded!');
+    console.log('Beans page loaded!');
     
-    // Add to cart functionality for accessories page
+    // Add to cart functionality for beans page
     const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
     console.log('Found', addToCartButtons.length, 'add-to-cart buttons');
     
@@ -174,16 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.classList.remove('btn-dark');
                     this.classList.add('btn-success');
                     
-                    if (window.MiniCart && typeof window.MiniCart.updateCartCount === 'function') {
+                    // Update MiniCart if available
+                    if (window.MiniCart) {
                         window.MiniCart.updateCartCount();
                     }
                     
+                    // Reload page to refresh cart count - SAME AS MACHINES.HTML
                     setTimeout(() => {
-                        this.innerHTML = originalText;
-                        this.classList.remove('btn-success');
-                        this.classList.add('btn-dark');
-                        this.disabled = false;
-                    }, 2000);
+                        window.location.reload();
+                    }, 1000);
                 } else {
                     alert(data.message || 'Error adding to cart');
                     this.innerHTML = originalText;
