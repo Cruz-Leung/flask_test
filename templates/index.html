@@ -18,7 +18,63 @@
             </div>
         </div>
 
-        <!-- Slide 2 - Split layout (Text LEFT, Image RIGHT) - SUMMER BLEND PROMO -->
+
+        <!-- Slide 2 - BLACK FRIDAY PROMO -->
+        <div class="hero-slide hero-slide-split">
+            <div class="hero-split-container">
+                <!-- Left: Image -->
+                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/black_friday.webp') }}');"></div>
+                <!-- Right: Black section with text and animations -->
+                <div class="hero-split-left" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);">
+                    <div class="hero-split-content">
+                        <!-- Animated "LIMITED TIME" badge with yellow background -->
+                        <span class="badge bg-warning text-dark mb-3 fs-6 limited-time-badge">
+                            ⏰ LIMITED TIME ONLY
+                        </span>
+                        
+                        <!-- Black Friday Title with glitch effect -->
+                        <h1 class="display-3 fw-bold mb-3 black-friday-title">
+                            BLACK FRIDAY
+                        </h1>
+                        
+                        <!-- Discount banner -->
+                        <div class="discount-banner mb-4">
+                            <span class="discount-text">10% OFF</span>
+                            <span class="discount-subtext">ALL ACCESSORIES</span>
+                        </div>
+                        
+                        <p class="lead mb-4 text-white-50">
+                            Upgrade your coffee setup with premium grinders, tampers, and brewing tools. 
+                            <strong class="text-warning">This week only!</strong>
+                        </p>
+                        
+                        <!-- Countdown timer effect (static for now) -->
+                        <div class="countdown-container mb-4">
+                            <div class="countdown-item">
+                                <span class="countdown-number">03</span>
+                                <span class="countdown-label">DAYS</span>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-item">
+                                <span class="countdown-number">12</span>
+                                <span class="countdown-label">HOURS</span>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-item">
+                                <span class="countdown-number">45</span>
+                                <span class="countdown-label">MINS</span>
+                            </div>
+                        </div>
+                        
+                        <a href="{{ url_for('accessories') }}" class="btn btn-warning btn-lg btn-black-friday">
+                            Shop Accessories <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 - Split layout (Text LEFT, Image RIGHT) - SUMMER BLEND PROMO -->
         <div class="hero-slide hero-slide-split">
             <div class="hero-split-container">
                 <!-- Left: Black section with text -->
@@ -35,25 +91,6 @@
                 </div>
                 <!-- Right: Image -->
                 <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/summer-blend-promo.webp') }}');"></div>
-            </div>
-        </div>
-
-        <!-- Slide 3 - Split layout (Image LEFT, Text RIGHT) -->
-        <div class="hero-slide hero-slide-split hero-slide-reverse">
-            <div class="hero-split-container">
-                <!-- Left: Image -->
-                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/bean_home.jpg') }}');"></div>
-                <!-- Right: Black section with text -->
-                <div class="hero-split-left">
-                    <div class="hero-split-content">
-                        <h1 class="display-4 fw-bold mb-4">Premium Coffee Beans</h1>
-                        <h2 class="h3 mb-4 text-white-50">Roasted to Perfection</h2>
-                        <p class="lead mb-4">Single origin & signature blends from the world's finest coffee regions.</p>
-                        <a href="{{ url_for('beans') }}" class="btn btn-light btn-lg">
-                            Browse Beans <i class="bi bi-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -384,14 +421,17 @@
         delay: 0,
     });
 
-    // Hero carousel code
+    // Hero carousel code with FIXED TIMING
     const slides = document.querySelectorAll('.hero-slide');
     const dots = document.querySelectorAll('.hero-dot');
     const prevBtn = document.querySelector('.hero-arrow-prev');
     const nextBtn = document.querySelector('.hero-arrow-next');
     let currentSlide = 0;
     const totalSlides = slides.length;
-    let autoplayInterval;
+    let autoplayInterval = null;
+    let autoplayTimeout = null;  // NEW: separate timeout tracker
+    const SLIDE_DURATION = 7000; // 7 seconds per slide
+    let slideStartTime = Date.now();
 
     function showSlide(index) {
         slides.forEach((slide, i) => {
@@ -409,6 +449,9 @@
         
         slides[currentSlide].classList.add('active');
         dots[currentSlide].classList.add('active');
+        
+        // Reset the start time when showing a new slide
+        slideStartTime = Date.now();
     }
 
     function nextSlide() {
@@ -419,31 +462,55 @@
         showSlide(currentSlide - 1);
     }
 
-    function startAutoplay() {
-        autoplayInterval = setInterval(nextSlide, 5000);
-    }
-
     function stopAutoplay() {
-        clearInterval(autoplayInterval);
+        // Clear BOTH interval and timeout
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+        if (autoplayTimeout) {
+            clearTimeout(autoplayTimeout);
+            autoplayTimeout = null;
+        }
     }
 
-    nextBtn.addEventListener('click', () => {
-        nextSlide();
+    function startAutoplay() {
+        // IMPORTANT: Stop everything first
+        stopAutoplay();
+        
+        // Calculate remaining time for current slide
+        const elapsedTime = Date.now() - slideStartTime;
+        const remainingTime = Math.max(0, SLIDE_DURATION - elapsedTime);
+        
+        // Wait for remaining time, then start regular interval
+        autoplayTimeout = setTimeout(() => {
+            nextSlide();
+            // Now start the regular interval
+            autoplayInterval = setInterval(nextSlide, SLIDE_DURATION);
+        }, remainingTime);
+    }
+
+    function resetAutoplay() {
         stopAutoplay();
         startAutoplay();
+    }
+
+    // Navigation button clicks
+    nextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetAutoplay();
     });
 
     prevBtn.addEventListener('click', () => {
         prevSlide();
-        stopAutoplay();
-        startAutoplay();
+        resetAutoplay();
     });
 
+    // Dot clicks
     dots.forEach((dot, index) => {
         dot.addEventListener('click', () => {
             showSlide(index);
-            stopAutoplay();
-            startAutoplay();
+            resetAutoplay();
         });
     });
 
@@ -463,13 +530,11 @@
     function handleSwipe() {
         if (touchEndX < touchStartX - 50) {
             nextSlide();
-            stopAutoplay();
-            startAutoplay();
+            resetAutoplay();
         }
         if (touchEndX > touchStartX + 50) {
             prevSlide();
-            stopAutoplay();
-            startAutoplay();
+            resetAutoplay();
         }
     }
 

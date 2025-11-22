@@ -60,7 +60,7 @@
                             <tbody>
                                 {% for p in products %}
                                 <tr class="product-row" 
-                                    onclick="window.location.href='{{ url_for('edit_product', sku=p.sku) }}'"
+                                    onclick="window.location.href='{{ url_for('edit_product', sku=p.sku, search=search, category=category_filter) }}'"
                                     style="cursor: pointer;"
                                     {% if product and product.sku == p.sku %}class="table-active"{% endif %}>
                                     <td><small>#{{ p.id }}</small></td>
@@ -200,7 +200,7 @@
                             <button type="submit" class="btn btn-primary btn-sm">
                                 <i class="bi bi-save"></i> Save Changes
                             </button>
-                            <a href="{{ url_for('edit_product') }}" class="btn btn-outline-secondary btn-sm">Clear Selection</a>
+                            <a href="{{ url_for('edit_product', search=search, category=category_filter) }}" class="btn btn-outline-secondary btn-sm">Clear Selection</a>
                         </div>
                     </form>
 
@@ -254,7 +254,8 @@
         ],
         'beans': [
             { value: 'coffee-beans', label: 'Coffee Beans' },
-            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' }
+            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' },
+            { value: 'capsules', label: 'Capsules' }
         ],
         'accessories': [
             { value: 'brewing-equipment', label: 'Brewing Equipment' },

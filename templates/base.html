@@ -97,11 +97,11 @@
                     <!-- Coffee Beans Dropdown (MEGA DROPDOWN) -->
                     <li class="nav-item nav-item-icon dropdown dropdown-mega px-3">
                         <a class="nav-link dropdown-toggle" href="#" id="beansDropdown" role="button" 
-                           data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
                             <div class="nav-icon">
                                 <img src="{{ url_for('static', filename='img/bean_icon.png') }}" 
-                                     alt="Beans" 
-                                     class="nav-icon-img">
+                                    alt="Beans" 
+                                    class="nav-icon-img">
                             </div>
                             <span class="nav-text">Beans</span>
                         </a>
@@ -110,11 +110,11 @@
                             <div class="container py-4">
                                 <div class="row g-4">
                                     <!-- Coffee Beans -->
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <a href="{{ url_for('beans', subcategory='coffee-beans') }}" class="dropdown-card">
                                             <div class="dropdown-card-img">
                                                 <img src="{{ url_for('static', filename='img/coffee_beans_dropdown.jpg') }}" 
-                                                     alt="Coffee Beans">
+                                                    alt="Coffee Beans">
                                             </div>
                                             <h5>Coffee Beans</h5>
                                             <p>Whole bean coffee for grinding fresh</p>
@@ -122,14 +122,26 @@
                                     </div>
                                     
                                     <!-- Ground Coffee -->
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <a href="{{ url_for('beans', subcategory='ground-coffee') }}" class="dropdown-card">
                                             <div class="dropdown-card-img">
                                                 <img src="{{ url_for('static', filename='img/ground_coffee_dropdown.jpg') }}" 
-                                                     alt="Ground Coffee">
+                                                    alt="Ground Coffee">
                                             </div>
                                             <h5>Ground Coffee</h5>
                                             <p>Pre-ground for convenience</p>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Capsules - NEW! -->
+                                    <div class="col-md-4">
+                                        <a href="{{ url_for('beans', subcategory='capsules') }}" class="dropdown-card">
+                                            <div class="dropdown-card-img">
+                                                <img src="{{ url_for('static', filename='img/capsules_dropdown.jpg') }}" 
+                                                    alt="Capsules">
+                                            </div>
+                                            <h5>Capsules</h5>
+                                            <p>Compatible coffee pods</p>
                                         </a>
                                     </div>
                                 </div>

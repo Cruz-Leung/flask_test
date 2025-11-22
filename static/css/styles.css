@@ -1036,6 +1036,30 @@ body.site-bg {
     }
 }
 
+/* Black Friday Promo Styles */
+
+/* Limited Time Badge - Pulsing animation with yellow background */
+.limited-time-badge {
+    animation: pulse-scale 2s ease-in-out infinite;
+    display: inline-block;
+    font-weight: 700;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+
+@keyframes pulse-scale {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.6);
+    }
+}
+
+/* Remove the old .limited-time-text styles */
+
 /* ===========================
    EXISTING STYLES
 =========================== */

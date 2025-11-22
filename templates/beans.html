@@ -24,6 +24,12 @@
             <li class="nav-item">
                 <a class="nav-link {% if subcategory == 'ground-coffee' %}active{% endif %}" 
                    href="{{ url_for('beans', subcategory='ground-coffee') }}">
+                    Ground Coffee
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if subcategory == 'capsules' %}active{% endif %}" 
+                   href="{{ url_for('beans', subcategory='capsules') }}">
                     Capsules
                 </a>
             </li>
@@ -44,18 +50,21 @@
                 <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" class="card-img-top" alt="{{ product.name }}">
                 {% endif %}
                 <div class="card-body d-flex flex-column">
-                    <!-- Subcategory Badge -->
-                    {% if product.subcategory %}
-                    <span class="badge bg-secondary mb-2 align-self-start">
-                        {% if product.subcategory == 'coffee-beans' %}
-                            <i class="bi bi-box-seam me-1"></i>Coffee Beans
-                        {% elif product.subcategory == 'ground-coffee' %}
-                            <i class="bi bi-cup-hot me-1"></i>Ground Coffee
-                        {% else %}
-                            {{ product.subcategory|title }}
-                        {% endif %}
-                    </span>
+                    
+                <!-- Subcategory Badge -->
+                {% if product.subcategory %}
+                <span class="badge bg-secondary mb-2 align-self-start">
+                    {% if product.subcategory == 'coffee-beans' %}
+                        <i class="bi bi-box-seam me-1"></i>Coffee Beans
+                    {% elif product.subcategory == 'ground-coffee' %}
+                        <i class="bi bi-cup-hot me-1"></i>Ground Coffee
+                    {% elif product.subcategory == 'capsules' %}
+                        <i class="bi bi-capsule me-1"></i>Capsules
+                    {% else %}
+                        {{ product.subcategory|title }}
                     {% endif %}
+                </span>
+                {% endif %}
                     
                     <h5 class="card-title">{{ product.name }}</h5>
                     

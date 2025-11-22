@@ -359,25 +359,30 @@ def product_detail(product_id):
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """User registration"""
+    """User registration with strong password requirements"""
     if request.method == "POST":
-        name = request.form.get("name")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
-        phone = request.form.get("phone")
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        phone = request.form.get("phone", "").strip()
+        address = request.form.get("address", "").strip()
         
-        # Validation
+        # Basic validation
         if not name or not email or not password:
             flash("Please fill in all required fields.", "danger")
             return redirect(url_for("register"))
         
+        # Password match check
         if password != confirm_password:
             flash("Passwords do not match!", "danger")
             return redirect(url_for("register"))
         
-        if len(password) < 6:
-            flash("Password must be at least 6 characters long.", "danger")
+        # SERVER-SIDE PASSWORD VALIDATION
+        password_errors = validate_password(password, name, email)
+        if password_errors:
+            for error in password_errors:
+                flash(error, "danger")
             return redirect(url_for("register"))
         
         # Check if user exists
@@ -389,14 +394,14 @@ def register():
             flash("Email already registered. Please log in.", "warning")
             return redirect(url_for("login"))
         
-        # Hash password with salt (bcrypt)
+        # Hash password with salt
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         
         # Insert new user
         try:
             conn.execute(
-                "INSERT INTO customers (name, email, password, phone) VALUES (?, ?, ?, ?)",
-                (name, email, hashed_password, phone)
+                "INSERT INTO customers (name, email, password, phone, address) VALUES (?, ?, ?, ?, ?)",
+                (name, email, hashed_password, phone, address)
             )
             conn.commit()
             
@@ -408,6 +413,7 @@ def register():
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
+            session['user_role'] = user['role']
             
             flash(f"Welcome, {name}! Your account has been created.", "success")
             return redirect(url_for('index'))
@@ -418,6 +424,82 @@ def register():
             return redirect(url_for("register"))
     
     return render_template("register.html", year=datetime.now().year)
+
+
+def validate_password(password, name="", email=""):
+    """
+    Validate password against professional security requirements.
+    Returns list of error messages (empty list if valid).
+    """
+    errors = []
+    
+    # Common weak passwords
+    COMMON_PASSWORDS = [
+        'password', 'password123', '123456', '12345678', 'qwerty', 'abc123',
+        'monkey', 'letmein', 'trustno1', 'dragon', 'baseball', 'iloveyou',
+        'master', 'sunshine', 'ashley', 'bailey', 'shadow', 'superman',
+        'coffee', 'espresso', 'cappuccino', 'latte', 'cruzy', 'admin',
+        'qwertyuiop', 'asdfghjkl', 'zxcvbnm', '1234567890',
+        'passw0rd', 'p@ssword', 'p@ssw0rd', 'welcome', 'login'
+    ]
+    
+    SEQUENTIAL_PATTERNS = [
+        'abcd', 'bcde', 'cdef', 'defg', '1234', '2345', '3456', '4567',
+        'qwer', 'wert', 'erty', 'asdf', 'sdfg', 'dfgh'
+    ]
+    
+    # 1. Length check
+    if len(password) < 8:
+        errors.append("Password must be at least 8 characters long.")
+    
+    # 2. Uppercase letter check
+    if not any(c.isupper() for c in password):
+        errors.append("Password must contain at least one uppercase letter (A-Z).")
+    
+    # 3. Lowercase letter check
+    if not any(c.islower() for c in password):
+        errors.append("Password must contain at least one lowercase letter (a-z).")
+    
+    # 4. Number check
+    if not any(c.isdigit() for c in password):
+        errors.append("Password must contain at least one number (0-9).")
+    
+    # 5. Special character check
+    special_chars = set("!@#$%^&*()_+-=[]{};':\"\\|,.<>/?")
+    if not any(c in special_chars for c in password):
+        errors.append("Password must contain at least one special character (!@#$%^&*).")
+    
+    # 6. No leading/trailing spaces
+    if password != password.strip():
+        errors.append("Password cannot have leading or trailing spaces.")
+    
+    # 7. Check for common passwords
+    if password.lower() in COMMON_PASSWORDS:
+        errors.append("This password is too common. Please choose a stronger password.")
+    
+    # 8. Check for sequential patterns
+    password_lower = password.lower()
+    for pattern in SEQUENTIAL_PATTERNS:
+        if pattern in password_lower:
+            errors.append("Password cannot contain sequential characters (e.g., abcd, 1234).")
+            break
+    
+    # 9. Check for repeating characters (e.g., aaaa, 1111)
+    import re
+    if re.search(r'(.)\1{3,}', password):
+        errors.append("Password cannot contain repeating characters (e.g., aaaa, 1111).")
+    
+    # 10. Check if password contains user's name
+    if name and name.lower() in password.lower():
+        errors.append("Password cannot contain your name.")
+    
+    # 11. Check if password contains email username
+    if email:
+        email_username = email.split('@')[0].lower()
+        if email_username in password.lower():
+            errors.append("Password cannot contain your email address.")
+    
+    return errors
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -440,6 +522,7 @@ def login():
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
+            session['user_role'] = user['role']  # ← ADD THIS LINE!
             
             flash(f"Welcome back, {user['name']}!", "success")
             
@@ -515,16 +598,14 @@ def edit_account():
                 # Get current user data
                 user = conn.execute("SELECT * FROM customers WHERE id = ?", (session['user_id'],)).fetchone()
                 
-                # Verify current password if provided
-                if current_password:
-                    if not check_password_hash(user['password'], current_password):
-                        flash('Current password is incorrect.', 'danger')
-                        conn.close()
-                        return redirect(url_for('edit_account'))
+                # Verify current password
+                if not current_password:
+                    flash('Please enter your current password to change it.', 'danger')
+                    conn.close()
+                    return redirect(url_for('edit_account'))
                 
-                # Validate new password
-                if len(new_password) < 6:
-                    flash('Password must be at least 6 characters.', 'danger')
+                if not check_password_hash(user['password'], current_password):
+                    flash('Current password is incorrect.', 'danger')
                     conn.close()
                     return redirect(url_for('edit_account'))
                 
@@ -534,7 +615,15 @@ def edit_account():
                     conn.close()
                     return redirect(url_for('edit_account'))
                 
-                # Hash new password using generate_password_hash (same as registration)
+                # SERVER-SIDE PASSWORD VALIDATION (using same function as registration)
+                password_errors = validate_password(new_password, name, user['email'])
+                if password_errors:
+                    for error in password_errors:
+                        flash(error, 'danger')
+                    conn.close()
+                    return redirect(url_for('edit_account'))
+                
+                # Hash new password
                 hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
                 
                 # Update with new password
@@ -543,6 +632,8 @@ def edit_account():
                     SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, password = ?
                     WHERE id = ?
                 """, (name, phone, address, city, state, postcode, hashed_password, session['user_id']))
+                
+                flash('✅ Profile and password updated successfully!', 'success')
             else:
                 # Update without changing password
                 conn.execute("""
@@ -550,11 +641,13 @@ def edit_account():
                     SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?
                     WHERE id = ?
                 """, (name, phone, address, city, state, postcode, session['user_id']))
+                
+                flash('✅ Profile updated successfully!', 'success')
             
             conn.commit()
             session['user_name'] = name
-            flash('✅ Account updated successfully!', 'success')
             return redirect(url_for('account'))
+            
         except Exception as e:
             flash(f'Error updating account: {e}', 'danger')
         finally:
@@ -570,7 +663,6 @@ def edit_account():
         return redirect(url_for('logout'))
     
     return render_template('edit_account.html', user=user, year=datetime.now().year)
-
 
 
 
@@ -1183,9 +1275,12 @@ def add_product():
 @app.route("/admin/product/edit", methods=['GET', 'POST'])
 @admin_required
 def edit_product():
-    sku = request.args.get('sku')
+    """Edit an existing product"""
+    
+    # Get filter parameters
     search = request.args.get('search', '').strip()
     category_filter = request.args.get('category', '')
+    sku = request.args.get('sku', '')
     
     conn = get_db_connection()
 
@@ -1222,7 +1317,7 @@ def edit_product():
                 if existing:
                     flash("⚠️ A product with this SKU already exists.", "warning")
                     conn.close()
-                    return redirect(url_for('edit_product', sku=old_sku))
+                    return redirect(url_for('edit_product', sku=old_sku, search=search, category=category_filter))
             
             if image_filename:
                 conn.execute("""
@@ -1247,13 +1342,13 @@ def edit_product():
             )
 
             flash("✅ Product updated successfully.", "success")
-            sku = new_sku
+            conn.close()
+            # Redirect WITH search parameters preserved
+            return redirect(url_for('edit_product', sku=new_sku, search=search, category=category_filter))
         except sqlite3.Error as e:
             flash(f"❌ Error updating product: {e}", "danger")
-        finally:
             conn.close()
-
-        return redirect(url_for('edit_product', sku=sku))
+            return redirect(url_for('edit_product', sku=old_sku, search=search, category=category_filter))
 
     # GET product list with filtering
     query = 'SELECT * FROM products WHERE 1=1'
@@ -1282,7 +1377,6 @@ def edit_product():
                          search=search,
                          category_filter=category_filter,
                          year=datetime.now().year)
-
 
 @app.route("/admin/product/delete/<sku>", methods=['POST'])
 @admin_required
