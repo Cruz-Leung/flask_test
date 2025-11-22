@@ -2391,6 +2391,9 @@ def search():
                          suggestions=suggestions,
                          year=datetime.now().year)
 
+@app.route("/brewing-guide")
+def brewing_guide():
+    return render_template("brewing_guide.html", year=datetime.now().year)
 
 @app.route("/manifest.json")
 def manifest():
