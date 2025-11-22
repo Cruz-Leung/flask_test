@@ -112,7 +112,21 @@ def utility_processor():
         conn.close()
         return product['id'] if product else 1  # Fallback to ID 1 if not found
     
-    return dict(get_breville_id=get_breville_id)
+    def get_summer_blend_id():
+        """Get the product ID for Summer Blend (B-FB-SUM-001)"""
+        conn = get_db_connection()
+        product = conn.execute("""
+            SELECT id FROM products 
+            WHERE sku = 'B-FB-SUM-001'
+            LIMIT 1
+        """).fetchone()
+        conn.close()
+        return product['id'] if product else 1  # Fallback to ID 1 if not found
+    
+    return dict(
+        get_breville_id=get_breville_id,
+        get_summer_blend_id=get_summer_blend_id
+    )
 
 
 # ===========================

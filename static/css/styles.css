@@ -100,6 +100,27 @@ body.site-bg {
     color: #ffffff !important;
 }
 
+/* Custom image icon for Beans nav item */
+.nav-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: brightness(100) saturate(100%); /* Makes it dark like other icons */
+    transition: all 0.3s ease;
+}
+
+/* Change color on hover to match other icons */
+.nav-link:hover .nav-icon-img {
+    filter: brightness(0) saturate(100%) invert(64%) sepia(28%) saturate(548%) hue-rotate(358deg) brightness(92%) contrast(88%);
+    /* This creates the warm #d4a574 color on hover */
+}
+
+/* Ensure the bean icon aligns with Bootstrap icons */
+.nav-icon .nav-icon-img {
+    display: block;
+    margin: 0 auto;
+}
+
 .product-section {
     padding: 3rem 0;
     margin: 2rem 0;
@@ -2498,63 +2519,106 @@ section {
     user-select: none;
 }
 
+.trending-card {
+    border: 2px solid #1a1a1a; /* Black border around entire card */
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.trending-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(212, 165, 116, 0.3);
+    border-color: #2c2c2c; /* Slightly lighter border on hover */
+}
+
 .trending-card-img-wrapper {
     position: relative;
     height: 220px;
     overflow: hidden;
-    border-radius: 12px 12px 0 0;
 }
 
-.trending-card-img-wrapper img {
-    width: 100%;
-    height: 100%;
+.trending-card .card-img-top {
+    height: 220px;
     object-fit: cover;
     transition: transform 0.4s ease;
-    pointer-events: none;
+    border-radius: 15px 15px 0 0;
 }
 
-.trending-product-card:hover .trending-card-img-wrapper img {
+.trending-card:hover .card-img-top {
     transform: scale(1.1);
+}
+
+.trending-card .card-body {
+    padding: 1.5rem;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+.trending-card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+}
+
+.trending-card .card-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    flex-grow: 1;
 }
 
 .trending-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.75rem;
+    top: 15px;
+    left: 15px;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
     font-weight: 600;
-    z-index: 2;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    z-index: 1;
+    animation: pulse-badge 2s infinite;
 }
 
-.trending-product-card .card {
-    border-radius: 12px;
-    border: 2px solid #1a1a1a; /* Black border */
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.trending-card .btn-outline-dark {
+    border-color: #1a1a1a;
+    color: #1a1a1a;
     transition: all 0.3s ease;
-    height: 100%;
-    background: white;
 }
 
-.trending-product-card:hover .card {
-    box-shadow: 0 8px 24px rgba(26, 26, 26, 0.2);
-    transform: translateY(-8px);
-    border-color: #2c2c2c;
+.trending-card .btn-outline-dark:hover {
+    background: #1a1a1a;
+    color: white;
+    transform: translateY(-2px);
 }
 
-.trending-product-card .card-body {
-    padding: 1.25rem;
+.trending-card .btn-dark {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    transition: all 0.3s ease;
 }
 
-.trending-product-card .card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    min-height: 2.6em;
+.trending-card .btn-dark:hover {
+    background: #2c2c2c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.3);
 }
 
 /* View Product Button */
@@ -2564,48 +2628,33 @@ section {
     font-weight: 600;
     border-radius: 8px;
     padding: 0.5rem 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s ease;
     position: relative;
-    overflow: hidden;
-}
-
-.trending-view-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: #1a1a1a;
-    transition: left 0.4s ease;
-    z-index: 0;
-}
-
-.trending-view-btn:hover::before {
-    left: 0;
+    background: transparent;
 }
 
 .trending-view-btn:hover {
     color: white;
-    border-color: #1a1a1a;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
+    background: linear-gradient(135deg, #8B4513 0%, #6f3710 100%);
+    border-color: #8B4513;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
 }
 
+/* Arrow animation on hover */
 .trending-view-btn i {
     transition: transform 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.trending-view-btn span,
-.trending-view-btn {
-    position: relative;
-    z-index: 1;
+    display: inline-block;
+    margin-left: 0.25rem;
 }
 
 .trending-view-btn:hover i {
-    transform: translateX(4px);
+    transform: translateX(5px);
+}
+
+/* Active state */
+.trending-view-btn:active {
+    transform: translateY(0) scale(1);
 }
 
 /* Scroll Buttons */
@@ -2630,9 +2679,9 @@ section {
 }
 
 .trending-scroll-btn:hover {
-    background: var(--brand-black);
+    background: #1a1a1a;
     color: white;
-    border-color: var(--brand-black);
+    border-color: #1a1a1a;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     transform: translateY(-50%) scale(1.1);
 }
@@ -2649,18 +2698,31 @@ section {
     right: 0;
 }
 
-/* Hide buttons when at start/end */
 .trending-scroll-btn.hidden {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
 
-/* Hero carousel to promotional cards spacing */
-.hero-carousel + section {
-    padding-top: 2.5rem !important;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .trending-card .card-img-top {
+        height: 200px;
+    }
+    
+    .trending-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .trending-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .trending-products-wrapper {
+        padding: 0 50px;
+    }
 }
-
 /* Promotional cards spacing */
 section.container.py-5 {
     padding-top: 2.5rem !important;
@@ -2951,5 +3013,149 @@ section.container-fluid.py-5.bg-light {
     
     .search-btn-expanding i {
         font-size: 0.9rem;
+    }
+}
+
+/* ===========================
+   CUSTOMERS ALSO LIKE SECTION (Product Detail Page)
+=========================== */
+
+.customers-also-like {
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.customers-also-like .section-header h3 {
+    color: #1a1a1a;
+    font-size: 1.75rem;
+}
+
+.customers-also-like .section-header p {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.recommendation-card {
+    border: 2px solid #1a1a1a;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(212, 165, 116, 0.3);
+    border-color: #2c2c2c;
+}
+
+.recommendation-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    border-radius: 15px 15px 0 0;
+}
+
+.recommendation-card:hover .card-img-top {
+    transform: scale(1.1);
+}
+
+.recommendation-card .card-body {
+    padding: 1.25rem;
+    background: transparent;
+}
+
+.recommendation-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+    min-height: 2.5rem;
+}
+
+.recommendation-card .price-section {
+    margin-bottom: 1rem;
+}
+
+.recommendation-card .price-section .fw-bold {
+    color: #1a1a1a;
+    font-size: 1.1rem;
+}
+
+.recommendation-card .badge-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.recommendation-card .btn-outline-dark {
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.recommendation-card .btn-outline-dark:hover {
+    background: linear-gradient(135deg, #8B4513 0%, #6f3710 100%);
+    border-color: #8B4513;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+.recommendation-card .btn-outline-dark i {
+    transition: transform 0.3s ease;
+}
+
+.recommendation-card .btn-outline-dark:hover i {
+    transform: translateX(3px);
+}
+
+/* Discount badge styling */
+.recommendation-card .badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%) !important;
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+/* Price styling with discount */
+.recommendation-card .text-success {
+    color: #28a745 !important;
+    font-weight: 700;
+}
+
+.recommendation-card .text-muted.small {
+    font-size: 0.85rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .recommendation-card .card-img-top {
+        height: 180px;
+    }
+    
+    .recommendation-card .card-body {
+        padding: 1rem;
+    }
+    
+    .recommendation-card .card-title {
+        font-size: 0.95rem;
+        min-height: 2.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .customers-also-like {
+        margin-top: 2rem;
+        padding-top: 2rem;
+    }
+    
+    .customers-also-like .section-header h3 {
+        font-size: 1.5rem;
+    }
+    
+    .recommendation-card .card-img-top {
+        height: 160px;
     }
 }

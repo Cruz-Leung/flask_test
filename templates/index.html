@@ -18,24 +18,23 @@
             </div>
         </div>
 
-        <!-- Slide 2 - Split layout (Text LEFT, Image RIGHT) -->
+        <!-- Slide 2 - Split layout (Text LEFT, Image RIGHT) - SUMMER BLEND PROMO -->
         <div class="hero-slide hero-slide-split">
             <div class="hero-split-container">
                 <!-- Left: Black section with text -->
                 <div class="hero-split-left">
                     <div class="hero-split-content">
-                        <span class="badge bg-warning text-dark mb-3 fs-6">Limited Offer</span>
-                        <h1 class="display-4 fw-bold mb-4">Barista Express</h1>
-                        <h2 class="h3 mb-4 text-white-50">10% Off This Week</h2>
-                        <p class="lead mb-4">Professional-grade espresso at home. Free shipping included.</p>
-                        {% set breville_id = get_breville_id() %}
-                        <a href="{{ url_for('product_detail', product_id=breville_id) }}" class="btn btn-light btn-lg">
-                            Learn More <i class="bi bi-arrow-right ms-2"></i>
+                        <span class="badge bg-warning text-dark mb-3 fs-6">New Arrival</span>
+                        <h1 class="display-4 fw-bold mb-4">Limited Seasonal Roast</h1>
+                        <h2 class="h3 mb-4 text-white-50">Summer Blend — First Batch</h2>
+                        <p class="lead mb-4">Small batch. Limited time. Experience our exclusive seasonal flavour.</p>
+                        <a href="{{ url_for('product_detail', product_id=get_summer_blend_id()) }}" class="btn btn-light btn-lg">
+                            Discover More <i class="bi bi-arrow-right ms-2"></i>
                         </a>
                     </div>
                 </div>
                 <!-- Right: Image -->
-                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/breville_express_promo.jpg') }}');"></div>
+                <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/summer-blend-promo.webp') }}');"></div>
             </div>
         </div>
 
@@ -144,10 +143,10 @@
 </section>
 
 <!-- Horizontal Promo Bars (BEFORE Category Cards) -->
-<section class="container-fluid py-5 bg-light">
+<section class="container-fluid py-3 bg-light">
     <div class="container">
         <!-- Bar 1: Slides from LEFT with popup -->
-        <div class="promo-bar promo-bar-left mb-5" 
+        <div class="promo-bar promo-bar-left mb-4" 
              data-aos="fade-right" 
              data-aos-duration="1000" 
              data-aos-easing="ease-out-cubic"
@@ -202,8 +201,8 @@
 </section>
 
 <!-- Trending Products Section -->
-<section class="container py-5">
-    <div class="text-center mb-5" 
+<section class="container py-3">
+    <div class="text-center mb-4" 
          data-aos="fade-down" 
          data-aos-duration="600">
         <h2 class="display-5 fw-bold mb-3">Trending Products</h2>
@@ -281,9 +280,9 @@
 </section>
 
 <!-- Product Categories with animations -->
-<section class="container py-5" id="product-categories">
+<section class="container py-3" id="product-categories">
     <!-- Section Header -->
-    <div class="text-center mb-5" 
+    <div class="text-center mb-4" 
          data-aos="fade-down" 
          data-aos-duration="600">
         <h2 class="display-5 fw-bold mb-3">Shop by Category</h2>
