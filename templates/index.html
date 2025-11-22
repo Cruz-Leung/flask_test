@@ -6,20 +6,7 @@
 <!-- Multi-Slide Hero Carousel -->
 <section class="hero-carousel">
     <div class="hero-slides">
-        <!-- Slide 1 - Keep original full-screen style -->
-        <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}');">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <div class="container text-center text-white">
-                    <h1 class="display-3 fw-bold mb-3 hero-title">Discover exceptional coffee</h1>
-                    <p class="lead mb-4 hero-subtitle">Specialty beans, premium machines and crafted accessories.</p>
-                    <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Slide 2 - BLACK FRIDAY PROMO -->
+        <!-- Slide 1 - BLACK FRIDAY PROMO -->
         <div class="hero-slide hero-slide-split">
             <div class="hero-split-container">
                 <!-- Left: Image -->
@@ -70,6 +57,18 @@
                             Shop Accessories <i class="bi bi-arrow-right ms-2"></i>
                         </a>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 - Keep original full-screen style -->
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/Homepage_cof.webp') }}');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="container text-center text-white">
+                    <h1 class="display-3 fw-bold mb-3 hero-title">Discover exceptional coffee</h1>
+                    <p class="lead mb-4 hero-subtitle">Specialty beans, premium machines and crafted accessories.</p>
+                    <a href="#product-categories" class="btn btn-outline-light btn-lg scroll-to-categories">Shop Coffee</a>
                 </div>
             </div>
         </div>
@@ -410,12 +409,15 @@
     const dots = document.querySelectorAll('.hero-dot');
     const prevBtn = document.querySelector('.hero-arrow-prev');
     const nextBtn = document.querySelector('.hero-arrow-next');
-    let currentSlide = 0;
+    let currentSlide = 0;  // This starts at index 0 (first slide in DOM)
     const totalSlides = slides.length;
     let autoplayInterval = null;
-    let autoplayTimeout = null;  // NEW: separate timeout tracker
-    const SLIDE_DURATION = 7000; // 7 seconds per slide
+    let autoplayTimeout = null;
+    const SLIDE_DURATION = 7000;
     let slideStartTime = Date.now();
+
+    // INITIALIZE: Show first slide on page load
+    showSlide(0);  // ← ADD THIS LINE to explicitly show slide 0
 
     function showSlide(index) {
         slides.forEach((slide, i) => {

@@ -174,6 +174,26 @@
         </div>
     </div>
     {% endif %}
+    
+    <!-- Request Product Box -->
+    <div class="row justify-content-center mt-5 pt-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-inbox-fill text-warning mb-3" style="font-size: 3rem;"></i>
+                    <h4 class="fw-bold mb-3">Didn't Find What You Were Looking For?</h4>
+                    <p class="text-muted mb-4">
+                        Can't find the product you're searching for? Request it and we'll try to stock it!
+                    </p>
+                    <a href="{{ url_for('request_product') }}" class="btn btn-warning btn-lg text-dark fw-bold">
+                        <i class="bi bi-box-seam me-2"></i>Request a Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 </section>
 {% endblock %}
 

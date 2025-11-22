@@ -344,7 +344,7 @@ def report_bug():
         bug_severity = request.form.get('bug_severity', 'medium')
         
         user_id = session.get('user_id')
-        username = session.get('username')
+        username = session.get('user_name')
         
         conn = get_db_connection()
         
@@ -378,6 +378,135 @@ def report_bug():
         return redirect(url_for('about'))
     
     return render_template('report_bug.html', year=datetime.now().year)
+
+@app.route("/manager/reports")
+@admin_required  # Both admin and manager can access
+def reports():
+    """Reports dashboard - Bugs and Missing Products"""
+    conn = get_db_connection()
+    
+    # Get all bug reports, sorted by severity and date
+    bugs = conn.execute('''
+        SELECT * FROM bug_reports 
+        ORDER BY 
+            CASE severity 
+                WHEN 'high' THEN 1 
+                WHEN 'medium' THEN 2 
+                WHEN 'low' THEN 3 
+            END,
+            created_at DESC
+    ''').fetchall()
+    
+    # Get all missing product requests
+    missing_products = conn.execute('''
+        SELECT * FROM missing_products 
+        ORDER BY created_at DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    return render_template('reports.html',
+                         bugs=bugs,
+                         missing_products=missing_products,
+                         year=datetime.now().year)
+
+
+@app.route("/manager/reports/bug/<int:bug_id>/update", methods=['POST'])
+@admin_required
+def update_bug_status(bug_id):
+    """Update bug report status"""
+    new_status = request.form.get('status')
+    
+    if new_status not in ['open', 'in-progress', 'resolved', 'closed']:
+        flash("Invalid status.", "danger")
+        return redirect(url_for('reports'))
+    
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE bug_reports 
+        SET status = ? 
+        WHERE id = ?
+    ''', (new_status, bug_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f"✅ Bug report #{bug_id} status updated to '{new_status}'", "success")
+    return redirect(url_for('reports'))
+
+
+@app.route("/manager/reports/missing/<int:request_id>/update", methods=['POST'])
+@admin_required
+def update_missing_product_status(request_id):
+    """Update missing product request status"""
+    new_status = request.form.get('status')
+    
+    if new_status not in ['pending', 'reviewing', 'added', 'declined']:
+        flash("Invalid status.", "danger")
+        return redirect(url_for('reports') + '?tab=missing')
+    
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE missing_products 
+        SET status = ? 
+        WHERE id = ?
+    ''', (new_status, request_id))
+    conn.commit()
+    conn.close()
+    
+    flash(f"✅ Product request #{request_id} status updated to '{new_status}'", "success")
+    return redirect(url_for('reports') + '?tab=missing')
+
+
+@app.route("/request-product", methods=['GET', 'POST'])
+def request_product():
+    """Request a missing product"""
+    # Check if user is logged in
+    if 'user_id' not in session:
+        flash("⚠️ Please sign in to request a product.", "warning")
+        return redirect(url_for('login', next=request.url))
+    
+    if request.method == 'POST':
+        product_name = request.form.get('product_name')
+        product_category = request.form.get('product_category')
+        description = request.form.get('description')
+        additional_info = request.form.get('additional_info', 'None provided')
+        priority = request.form.get('priority', 'medium')
+        
+        user_id = session.get('user_id')
+        username = session.get('user_name')  # FIXED: using user_name
+        
+        conn = get_db_connection()
+        
+        # Create missing_products table if it doesn't exist
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS missing_products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                username TEXT NOT NULL,
+                product_name TEXT NOT NULL,
+                product_category TEXT NOT NULL,
+                description TEXT NOT NULL,
+                additional_info TEXT,
+                priority TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES customers (id)
+            )
+        ''')
+        
+        # Insert missing product request
+        conn.execute('''
+            INSERT INTO missing_products (user_id, username, product_name, product_category, description, additional_info, priority)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, username, product_name, product_category, description, additional_info, priority))
+        
+        conn.commit()
+        conn.close()
+        
+        flash(f"✅ Thank you, {username}! Your product request has been submitted successfully.", "success")
+        return redirect(url_for('index'))
+    
+    return render_template('request_product.html', year=datetime.now().year)
 
 @app.route("/terms")
 def terms():
@@ -1814,6 +1943,51 @@ def init_orders_db():
         print("✅ New orders tables created")
     
     conn.close()
+    
+def init_reports_db():
+    """Initialize bug reports and missing products tables"""
+    conn = get_db_connection()
+    
+    # Drop old missing_products table if it exists (to add new columns)
+    conn.execute('DROP TABLE IF EXISTS missing_products')
+    
+    # Create bug_reports table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS bug_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            device TEXT,
+            severity TEXT NOT NULL,
+            status TEXT DEFAULT 'open',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES customers (id)
+        )
+    ''')
+    
+    # Create missing_products table with all columns
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS missing_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            product_category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            additional_info TEXT,
+            priority TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES customers (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("✅ Reports tables initialized")
 
 def add_discount_column():
     """Add discount column to products table if it doesn't exist"""
@@ -2219,6 +2393,7 @@ def search():
 if __name__ == "__main__":
     init_db()
     init_orders_db()
+    init_reports_db() 
     add_discount_column()
     set_product_discount()
     add_beans_subcategories()

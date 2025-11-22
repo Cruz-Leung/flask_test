@@ -121,7 +121,7 @@
             </div>
             {% endif %}
         </div>
-        
+
         <!-- Product Details -->
         <div class="col-lg-6">
             <div class="product-detail-info">
@@ -278,14 +278,16 @@
     <!-- Customers Also Like Section -->
     {% if related_products %}
     <section class="customers-also-like mt-5 pt-5">
-        <div class="section-header mb-4">
+        <div class="section-header mb-4" data-aos="fade-up">
             <h3 class="fw-bold">Customers Also Like</h3>
             <p class="text-muted">Similar products you might be interested in</p>
         </div>
 
         <div class="row g-4">
             {% for related in related_products %}
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3" 
+                 data-aos="fade-up" 
+                 data-aos-delay="{{ loop.index0 * 100 }}">
                 <div class="card recommendation-card h-100">
                     <a href="{{ url_for('product_detail', product_id=related.id) }}" class="text-decoration-none">
                         {% if related.image %}

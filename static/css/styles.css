@@ -2050,8 +2050,9 @@ body.site-bg {
     transform: translateX(0) !important;
     margin-right: 1rem; /* Add some spacing from the edge */
 }
+
 /* ===========================
-   CATEGORY TABS OVERLAY (MACHINES PAGE)
+   CATEGORY TABS OVERLAY (MACHINES, BEANS, ACCESSORIES PAGES)
 =========================== */
 
 .category-tabs-overlay {
@@ -2106,11 +2107,6 @@ body.site-bg {
         padding: 0.7rem 1.25rem;
         font-size: 0.9rem;
     }
-    
-    .machines-hero-text-overlay h1 {
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-    }
 }
 
 @media (max-width: 576px) {
@@ -2122,11 +2118,6 @@ body.site-bg {
     .category-tabs-overlay .nav-link {
         padding: 0.6rem 0.9rem;
         font-size: 0.85rem;
-    }
-    
-    .machines-hero-text-overlay h1 {
-        font-size: 2rem;
-        margin-bottom: 1.5rem;
     }
 }
 
@@ -3877,4 +3868,36 @@ section.container-fluid.py-5.bg-light {
     .taste-bar-detail {
         height: 8px;
     }
+}
+
+/* ===========================
+   REPORTS PAGE STYLES
+=========================== */
+
+/* Reports-specific nav pills (only affects reports page) */
+#reportsTabs .nav-link {
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#reportsTabs .nav-link:hover {
+    background: rgba(212, 165, 116, 0.1);
+}
+
+#reportsTabs .nav-link.active {
+    background: linear-gradient(135deg, #d4a574 0%, #c99a6e 100%);
+    box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+}
+
+/* Bug table row hover */
+.bug-row:hover {
+    background-color: rgba(212, 165, 116, 0.05);
+}
+
+/* Modal styling for reports */
+.modal-header {
+    background: linear-gradient(135deg, #f8f5f0 0%, #ffffff 100%);
+    border-bottom: 2px solid #d4a574;
 }

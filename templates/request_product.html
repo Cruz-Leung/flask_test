@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Request a Product - Cruzy Coffee Co.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <i class="bi bi-inbox-fill text-warning" style="font-size: 4rem;"></i>
+                <h1 class="display-5 fw-bold mt-3">Request a Product</h1>
+                <p class="lead text-muted">
+                    Can't find what you're looking for? Let us know!
+                </p>
+            </div>
+
+            <!-- Product Request Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{{ url_for('request_product') }}">
+                        <!-- Product Name -->
+                        <div class="mb-4">
+                            <label for="product_name" class="form-label fw-bold">
+                                <i class="bi bi-box me-2"></i>Product Name *
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="product_name" 
+                                   name="product_name" 
+                                   placeholder="What product are you looking for?"
+                                   required>
+                            <small class="text-muted">Be as specific as possible</small>
+                        </div>
+
+                        <!-- Product Category -->
+                        <div class="mb-4">
+                            <label for="product_category" class="form-label fw-bold">
+                                <i class="bi bi-tags me-2"></i>Category *
+                            </label>
+                            <select class="form-select form-select-lg" id="product_category" name="product_category" required>
+                                <option value="" selected disabled>Choose a category...</option>
+                                <option value="beans">☕ Coffee Beans</option>
+                                <option value="semi-auto">⚙️ Semi-Automatic Machine</option>
+                                <option value="fully-auto">🤖 Fully Automatic Machine</option>
+                                <option value="pod">🎯 Pod Machine</option>
+                                <option value="accessories">🔧 Accessories</option>
+                                <option value="other">📦 Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold">
+                                <i class="bi bi-chat-left-text me-2"></i>Description *
+                            </label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="6" 
+                                      placeholder="Please describe the product you'd like us to stock:&#10;- Brand/manufacturer&#10;- Specific model or variant&#10;- Key features you're looking for&#10;- Why you want this product"
+                                      required></textarea>
+                            <small class="text-muted">The more details, the better we can help!</small>
+                        </div>
+
+                        <!-- Additional Info (Optional) -->
+                        <div class="mb-4">
+                            <label for="additional_info" class="form-label fw-bold">
+                                <i class="bi bi-info-circle me-2"></i>Additional Information (Optional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="additional_info" 
+                                   name="additional_info" 
+                                   placeholder="e.g., Price range, where you've seen it, urgency">
+                            <small class="text-muted">Any other details that might help us source this product</small>
+                        </div>
+
+                        <!-- Priority Level -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-speedometer2 me-2"></i>How urgently do you need this? *
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="priority" id="priority_low" value="low">
+                                <label class="btn btn-outline-success" for="priority_low">
+                                    🟢 No Rush<br><small class="text-muted">Just a suggestion</small>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="priority" id="priority_medium" value="medium" checked>
+                                <label class="btn btn-outline-warning" for="priority_medium">
+                                    🟡 Soon<br><small class="text-muted">Would buy if available</small>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="priority" id="priority_high" value="high">
+                                <label class="btn btn-outline-danger" for="priority_high">
+                                    🔴 ASAP<br><small class="text-muted">Actively looking for this</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- User Info Display -->
+                        <div class="alert alert-light border mb-4">
+                            <p class="mb-1">
+                                <strong>Requested by:</strong> {{ session.user_name }}
+                            </p>
+                            <p class="mb-0 text-muted small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                We'll review your request and may contact you for more details
+                            </p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg text-dark fw-bold">
+                                <i class="bi bi-send-fill me-2"></i>Submit Product Request
+                            </button>
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Text -->
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    <i class="bi bi-heart-fill me-1 text-danger"></i>
+                    Thank you for helping us improve our product selection!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
