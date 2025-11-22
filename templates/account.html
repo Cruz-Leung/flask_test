@@ -15,8 +15,19 @@
                     <p><strong>Name:</strong> {{ user.name }}</p>
                     <p><strong>Email:</strong> {{ user.email }}</p>
                     <p><strong>Phone:</strong> {{ user.phone if user.phone else 'Not provided' }}</p>
-                    <p><strong>Role:</strong> <span class="badge bg-dark">{{ user.role|capitalize }}</span></p>
-                    <p><strong>Member Since:</strong> {{ user.created_at }}</p>
+                    
+                    {% if user.role in ['admin', 'manager'] %}
+                    <p><strong>Role:</strong> 
+                        <span class="badge 
+                            {% if user.role == 'manager' %}bg-warning text-dark
+                            {% elif user.role == 'admin' %}bg-primary
+                            {% else %}bg-dark{% endif %}">
+                            {{ user.role|capitalize }}
+                        </span>
+                    </p>
+                    {% endif %}
+                    
+                    <p><strong>Member Since:</strong> {{ user.created_at[:10] }}</p>
                     <a href="{{ url_for('edit_account') }}" class="btn btn-dark w-100">Edit Account</a>
                 </div>
             </div>
