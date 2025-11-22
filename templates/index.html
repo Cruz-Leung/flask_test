@@ -93,21 +93,6 @@
                 <div class="hero-split-right" style="background-image: url('{{ url_for('static', filename='img/summer-blend-promo.webp') }}');"></div>
             </div>
         </div>
-
-        <!-- Slide 4 - Full overlay style (like slide 1) -->
-        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='img/membership.jpg') }}');">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <div class="container text-center text-white">
-                    <h1 class="display-3 fw-bold mb-3 hero-title">Member Benefits</h1>
-                    <h2 class="h2 mb-4 hero-subtitle">Join the Club</h2>
-                    <p class="lead mb-4">Exclusive discounts, early access to limited releases & free shipping on all orders.</p>
-                    <a href="{{ url_for('membership') }}" class="btn btn-outline-light btn-lg">
-                        Discover More <i class="bi bi-arrow-right ms-2"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Navigation Dots -->
@@ -115,7 +100,6 @@
         <span class="hero-dot active" data-slide="0"></span>
         <span class="hero-dot" data-slide="1"></span>
         <span class="hero-dot" data-slide="2"></span>
-        <span class="hero-dot" data-slide="3"></span>
     </div>
 
     <!-- Navigation Arrows -->
@@ -190,7 +174,7 @@
              data-aos-once="true">
             <div class="promo-bar-content">
                 <div class="promo-bar-image">
-                    <img src="{{ url_for('static', filename='img/bean_home.jpg') }}" alt="Cruzy Homegrown Beans">
+                    <img src="{{ url_for('static', filename='img/homegrown.webp') }}" alt="Cruzy Homegrown Beans">
                 </div>
                 <div class="promo-bar-text">
                     <span class="badge bg-danger text-white mb-3">
@@ -201,7 +185,7 @@
                         Exclusive single-origin beans from our private estate. 
                         Roasted in small batches for the finest flavor profile.
                     </p>
-                    <a href="{{ url_for('coming_soon') }}" class="btn btn-dark btn-lg">
+                    <a href="{{ url_for('product_detail', product_id=get_cruzy_beans_id()) }}" class="btn btn-dark btn-lg">
                         Pre-Order Now <i class="bi bi-arrow-right ms-2"></i>
                     </a>
                 </div>

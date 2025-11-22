@@ -28,7 +28,7 @@
     <div class="row g-5">
         <!-- Product Image -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm mb-4">
                 {% if product.image %}
                 <img src="{{ url_for('static', filename='img/' + product.image) }}" 
                      class="card-img-top" 
@@ -41,6 +41,87 @@
                      style="border-radius: 1rem; max-height: 500px; object-fit: cover;">
                 {% endif %}
             </div>
+
+            <!-- TASTE PROFILE FOR BEANS PRODUCTS - UNDER PHOTO -->
+            {% if product.category == 'beans' and (product.taste_sweetness or product.taste_aroma or product.taste_body) %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-cup-hot me-2 text-warning"></i>Taste Profile
+                    </h5>
+                    <div class="taste-profile-detail">
+                        {% if product.taste_sweetness %}
+                        <div class="taste-item-detail mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <i class="bi bi-heart-fill text-danger me-2"></i>
+                                    <span class="fw-semibold">Sweetness</span>
+                                </div>
+                                <span class="badge bg-dark">{{ product.taste_sweetness }}/5</span>
+                            </div>
+                            <div class="taste-bar-detail">
+                                <div class="taste-fill-detail" style="width: {{ (product.taste_sweetness / 5 * 100)|int }}%; background: linear-gradient(90deg, #dc3545, #ff6b7a);"></div>
+                            </div>
+                            <small class="text-muted">
+                                {% if product.taste_sweetness == 1 %}Very low sweetness - pure, bold coffee flavor
+                                {% elif product.taste_sweetness == 2 %}Low sweetness - subtle natural sugars
+                                {% elif product.taste_sweetness == 3 %}Medium sweetness - balanced flavor
+                                {% elif product.taste_sweetness == 4 %}High sweetness - pronounced caramel notes
+                                {% elif product.taste_sweetness == 5 %}Very high sweetness - rich, dessert-like
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if product.taste_aroma %}
+                        <div class="taste-item-detail mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <i class="bi bi-flower1 text-primary me-2"></i>
+                                    <span class="fw-semibold">Aroma</span>
+                                </div>
+                                <span class="badge bg-dark">{{ product.taste_aroma }}/5</span>
+                            </div>
+                            <div class="taste-bar-detail">
+                                <div class="taste-fill-detail" style="width: {{ (product.taste_aroma / 5 * 100)|int }}%; background: linear-gradient(90deg, #0d6efd, #6ea8fe);"></div>
+                            </div>
+                            <small class="text-muted">
+                                {% if product.taste_aroma == 1 %}Very light aroma - subtle fragrance
+                                {% elif product.taste_aroma == 2 %}Light aroma - delicate scent
+                                {% elif product.taste_aroma == 3 %}Medium aroma - pleasant bouquet
+                                {% elif product.taste_aroma == 4 %}Strong aroma - rich fragrance
+                                {% elif product.taste_aroma == 5 %}Very strong aroma - intense, captivating scent
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if product.taste_body %}
+                        <div class="taste-item-detail">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <i class="bi bi-droplet-fill text-warning me-2"></i>
+                                    <span class="fw-semibold">Body</span>
+                                </div>
+                                <span class="badge bg-dark">{{ product.taste_body }}/5</span>
+                            </div>
+                            <div class="taste-bar-detail">
+                                <div class="taste-fill-detail" style="width: {{ (product.taste_body / 5 * 100)|int }}%; background: linear-gradient(90deg, #ffc107, #ffd966);"></div>
+                            </div>
+                            <small class="text-muted">
+                                {% if product.taste_body == 1 %}Very light body - tea-like texture
+                                {% elif product.taste_body == 2 %}Light body - smooth and clean
+                                {% elif product.taste_body == 3 %}Medium body - balanced mouthfeel
+                                {% elif product.taste_body == 4 %}Full body - rich and creamy
+                                {% elif product.taste_body == 5 %}Very full body - syrupy, luxurious texture
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Product Details -->
@@ -112,6 +193,8 @@
                         {{ product.description if product.description else 'No description available.' }}
                     </p>
                 </div>
+
+                <hr class="my-4">
 
                 <!-- Quantity Selector and Add to Cart -->
                 {% if product.stock > 0 %}
@@ -350,4 +433,3 @@ function changeQuantity(productId, change) {
 }
 </script>
 {% endblock %}
-

@@ -196,6 +196,57 @@
                             <small class="text-muted">Enter 0 for no discount, 10 for 10% off, etc.</small>
                         </div>
 
+                        <!-- Taste Profile Section (Only for Beans) -->
+                        <div id="taste-profile-section" style="display: none;">
+                            <hr class="my-3">
+                            <h6 class="mb-3">
+                                <i class="bi bi-cup-hot me-2"></i>Taste Profile
+                            </h6>
+                            <p class="text-muted small mb-2">Rate 1-5 (low to high)</p>
+                            
+                            <div class="mb-2">
+                                <label for="taste_sweetness" class="form-label small">
+                                    <i class="bi bi-heart-fill text-danger me-1"></i>Sweetness
+                                </label>
+                                <select class="form-select form-select-sm" id="taste_sweetness" name="taste_sweetness">
+                                    <option value="">Not Set</option>
+                                    <option value="1" {% if product and product.taste_sweetness == 1 %}selected{% endif %}>1 - Very Low</option>
+                                    <option value="2" {% if product and product.taste_sweetness == 2 %}selected{% endif %}>2 - Low</option>
+                                    <option value="3" {% if product and product.taste_sweetness == 3 %}selected{% endif %}>3 - Medium</option>
+                                    <option value="4" {% if product and product.taste_sweetness == 4 %}selected{% endif %}>4 - High</option>
+                                    <option value="5" {% if product and product.taste_sweetness == 5 %}selected{% endif %}>5 - Very High</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label for="taste_aroma" class="form-label small">
+                                    <i class="bi bi-flower1 text-primary me-1"></i>Aroma
+                                </label>
+                                <select class="form-select form-select-sm" id="taste_aroma" name="taste_aroma">
+                                    <option value="">Not Set</option>
+                                    <option value="1" {% if product and product.taste_aroma == 1 %}selected{% endif %}>1 - Very Low</option>
+                                    <option value="2" {% if product and product.taste_aroma == 2 %}selected{% endif %}>2 - Low</option>
+                                    <option value="3" {% if product and product.taste_aroma == 3 %}selected{% endif %}>3 - Medium</option>
+                                    <option value="4" {% if product and product.taste_aroma == 4 %}selected{% endif %}>4 - High</option>
+                                    <option value="5" {% if product and product.taste_aroma == 5 %}selected{% endif %}>5 - Very High</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="taste_body" class="form-label small">
+                                    <i class="bi bi-droplet-fill text-warning me-1"></i>Body
+                                </label>
+                                <select class="form-select form-select-sm" id="taste_body" name="taste_body">
+                                    <option value="">Not Set</option>
+                                    <option value="1" {% if product and product.taste_body == 1 %}selected{% endif %}>1 - Very Light</option>
+                                    <option value="2" {% if product and product.taste_body == 2 %}selected{% endif %}>2 - Light</option>
+                                    <option value="3" {% if product and product.taste_body == 3 %}selected{% endif %}>3 - Medium</option>
+                                    <option value="4" {% if product and product.taste_body == 4 %}selected{% endif %}>4 - Full</option>
+                                    <option value="5" {% if product and product.taste_body == 5 %}selected{% endif %}>5 - Very Full</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-sm">
                                 <i class="bi bi-save"></i> Save Changes
@@ -249,12 +300,12 @@
     const subcategoryOptions = {
         'machines': [
             { value: 'semi-auto', label: 'Semi-Automatic' },
-            { value: 'auto', label: 'Automatic' },
-            { value: 'manual', label: 'Manual' }
+            { value: 'fully-auto', label: 'Fully Automatic' },
+            { value: 'pod', label: 'Pod Machines' }
         ],
         'beans': [
             { value: 'coffee-beans', label: 'Coffee Beans' },
-            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' },
+            { value: 'ground-coffee', label: 'Ground Coffee' },
             { value: 'capsules', label: 'Capsules' }
         ],
         'accessories': [
@@ -267,9 +318,11 @@
     const categorySelect = document.getElementById('category');
     const subcategorySelect = document.getElementById('subcategory');
     const subcategoryHint = document.getElementById('subcategory-hint');
+    const tasteProfileSection = document.getElementById('taste-profile-section');
 
     // Store the current subcategory value (for edit mode)
     const currentSubcategory = "{{ product.subcategory if product else '' }}";
+    const currentCategory = "{{ product.category if product else '' }}";
 
     // Function to update subcategory dropdown based on category
     function updateSubcategoryOptions() {
@@ -303,6 +356,13 @@
             subcategorySelect.appendChild(placeholderOption);
             subcategorySelect.disabled = true;
             subcategoryHint.textContent = 'Choose a category to see subcategories';
+        }
+        
+        // Show/hide taste profile section for beans
+        if (selectedCategory === 'beans') {
+            tasteProfileSection.style.display = 'block';
+        } else {
+            tasteProfileSection.style.display = 'none';
         }
     }
 

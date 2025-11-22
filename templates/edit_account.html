@@ -140,216 +140,232 @@
         'asdf', 'sdfg', 'dfgh', 'fghj', 'ghjk', 'hjkl'
     ];
 
-    const newPasswordInput = document.getElementById('new_password');
-    const confirmInput = document.getElementById('confirm_password');
-    const currentPasswordInput = document.getElementById('current_password');
-    const nameInput = document.getElementById('name');
-    const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('editAccountForm');
-    const strengthContainer = document.getElementById('password-strength-container');
-    const confirmContainer = document.getElementById('confirm-password-container');
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmInput = document.getElementById('confirm_password');
+        const currentPasswordInput = document.getElementById('current_password');
+        const nameInput = document.getElementById('name');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('editAccountForm');
+        const strengthContainer = document.getElementById('password-strength-container');
+        const confirmContainer = document.getElementById('confirm-password-container');
 
-    let requirements = {
-        length: false,
-        uppercase: false,
-        lowercase: false,
-        number: false,
-        special: false,
-        common: false,
-        match: false
-    };
+        let requirements = {
+            length: false,
+            uppercase: false,
+            lowercase: false,
+            number: false,
+            special: false,
+            common: false,
+            match: false
+        };
 
-    let passwordChangeMode = false;
+        let passwordChangeMode = false;
 
-    function updateRequirement(id, passed) {
-        const elem = document.getElementById(id);
-        if (!elem) return;
-        const icon = elem.querySelector('i');
-        
-        if (passed) {
-            icon.className = 'bi bi-check-circle text-success';
-            elem.style.color = '#198754';
-        } else {
-            icon.className = 'bi bi-x-circle text-danger';
-            elem.style.color = '#dc3545';
-        }
-    }
-
-    function checkPasswordStrength(password) {
-        let score = 0;
-        
-        // Length check
-        requirements.length = password.length >= 8;
-        updateRequirement('req-length', requirements.length);
-        if (requirements.length) score += 20;
-        
-        // Uppercase check
-        requirements.uppercase = /[A-Z]/.test(password);
-        updateRequirement('req-uppercase', requirements.uppercase);
-        if (requirements.uppercase) score += 20;
-        
-        // Lowercase check
-        requirements.lowercase = /[a-z]/.test(password);
-        updateRequirement('req-lowercase', requirements.lowercase);
-        if (requirements.lowercase) score += 20;
-        
-        // Number check
-        requirements.number = /[0-9]/.test(password);
-        updateRequirement('req-number', requirements.number);
-        if (requirements.number) score += 20;
-        
-        // Special character check
-        requirements.special = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-        updateRequirement('req-special', requirements.special);
-        if (requirements.special) score += 20;
-        
-        // Check for common passwords
-        const lowerPassword = password.toLowerCase().trim();
-        const isCommon = COMMON_PASSWORDS.includes(lowerPassword);
-        
-        // Check for sequential patterns
-        const hasSequential = SEQUENTIAL_PATTERNS.some(pattern => 
-            lowerPassword.includes(pattern)
-        );
-        
-        // Check for repeating characters (e.g., 'aaaa', '1111')
-        const hasRepeating = /(.)\1{3,}/.test(password);
-        
-        // Check if password contains name
-        const name = nameInput.value.toLowerCase();
-        const containsPersonalInfo = (name && lowerPassword.includes(name));
-        
-        // Check for leading/trailing spaces
-        const hasSpaces = password !== password.trim();
-        
-        requirements.common = !isCommon && !hasSequential && !hasRepeating && 
-                             !containsPersonalInfo && !hasSpaces;
-        updateRequirement('req-common', requirements.common);
-        
-        // Update strength bar
-        const strengthBar = document.getElementById('passwordStrength');
-        const strengthText = document.getElementById('strengthText');
-        
-        strengthBar.style.width = score + '%';
-        
-        if (score === 0) {
-            strengthBar.className = 'progress-bar';
-            strengthText.textContent = '';
-        } else if (score < 40) {
-            strengthBar.className = 'progress-bar bg-danger';
-            strengthText.textContent = 'Weak password';
-            strengthText.className = 'text-danger';
-        } else if (score < 80) {
-            strengthBar.className = 'progress-bar bg-warning';
-            strengthText.textContent = 'Medium strength';
-            strengthText.className = 'text-warning';
-        } else if (score < 100) {
-            strengthBar.className = 'progress-bar bg-info';
-            strengthText.textContent = 'Good password';
-            strengthText.className = 'text-info';
-        } else {
-            strengthBar.className = 'progress-bar bg-success';
-            strengthText.textContent = 'Strong password!';
-            strengthText.className = 'text-success';
-        }
-        
-        checkFormValidity();
-    }
-
-    function checkPasswordMatch() {
-        const password = newPasswordInput.value;
-        const confirm = confirmInput.value;
-        const matchDiv = document.getElementById('passwordMatch');
-        
-        if (confirm === '') {
-            matchDiv.innerHTML = '';
-            requirements.match = false;
-        } else if (password === confirm) {
-            matchDiv.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Passwords match</small>';
-            requirements.match = true;
-        } else {
-            matchDiv.innerHTML = '<small class="text-danger"><i class="bi bi-x-circle"></i> Passwords do not match</small>';
-            requirements.match = false;
-        }
-        
-        checkFormValidity();
-    }
-
-    function checkFormValidity() {
-        if (passwordChangeMode) {
-            // If changing password, all requirements must be met
-            const allRequirementsMet = Object.values(requirements).every(req => req === true);
-            const currentPasswordFilled = currentPasswordInput.value.length > 0;
-            submitBtn.disabled = !allRequirementsMet || !currentPasswordFilled;
-        } else {
-            // If not changing password, form is always valid
-            submitBtn.disabled = false;
-        }
-    }
-
-    // Event listeners
-    newPasswordInput.addEventListener('input', function() {
-        const hasPassword = this.value.length > 0;
-        
-        // Toggle password change mode
-        passwordChangeMode = hasPassword;
-        
-        if (hasPassword) {
-            // Show password strength and confirm field
-            strengthContainer.style.display = 'block';
-            confirmContainer.style.display = 'block';
-            checkPasswordStrength(this.value);
-        } else {
-            // Hide password strength and confirm field
-            strengthContainer.style.display = 'none';
-            confirmContainer.style.display = 'none';
-            confirmInput.value = '';
+        function updateRequirement(id, passed) {
+            const elem = document.getElementById(id);
+            if (!elem) return;
+            const icon = elem.querySelector('i');
             
-            // Reset requirements
-            requirements = {
-                length: false,
-                uppercase: false,
-                lowercase: false,
-                number: false,
-                special: false,
-                common: false,
-                match: false
-            };
+            if (passed) {
+                icon.className = 'bi bi-check-circle text-success';
+                elem.style.color = '#198754';
+            } else {
+                icon.className = 'bi bi-x-circle text-danger';
+                elem.style.color = '#dc3545';
+            }
+        }
+
+        function checkPasswordStrength(password) {
+            let score = 0;
+            
+            // Length check
+            requirements.length = password.length >= 8;
+            updateRequirement('req-length', requirements.length);
+            if (requirements.length) score += 20;
+            
+            // Uppercase check
+            requirements.uppercase = /[A-Z]/.test(password);
+            updateRequirement('req-uppercase', requirements.uppercase);
+            if (requirements.uppercase) score += 20;
+            
+            // Lowercase check
+            requirements.lowercase = /[a-z]/.test(password);
+            updateRequirement('req-lowercase', requirements.lowercase);
+            if (requirements.lowercase) score += 20;
+            
+            // Number check
+            requirements.number = /[0-9]/.test(password);
+            updateRequirement('req-number', requirements.number);
+            if (requirements.number) score += 20;
+            
+            // Special character check
+            requirements.special = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            updateRequirement('req-special', requirements.special);
+            if (requirements.special) score += 20;
+            
+            // Check for common passwords
+            const lowerPassword = password.toLowerCase().trim();
+            const isCommon = COMMON_PASSWORDS.includes(lowerPassword);
+            
+            // Check for sequential patterns
+            const hasSequential = SEQUENTIAL_PATTERNS.some(pattern => 
+                lowerPassword.includes(pattern)
+            );
+            
+            // Check for repeating characters (e.g., 'aaaa', '1111')
+            const hasRepeating = /(.)\1{3,}/.test(password);
+            
+            // Check if password contains name
+            const name = nameInput.value.toLowerCase();
+            const containsPersonalInfo = (name && lowerPassword.includes(name));
+            
+            // Check for leading/trailing spaces
+            const hasSpaces = password !== password.trim();
+            
+            requirements.common = !isCommon && !hasSequential && !hasRepeating && 
+                                 !containsPersonalInfo && !hasSpaces;
+            updateRequirement('req-common', requirements.common);
+            
+            // Update strength bar
+            const strengthBar = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            
+            strengthBar.style.width = score + '%';
+            
+            if (score === 0) {
+                strengthBar.className = 'progress-bar';
+                strengthText.textContent = '';
+            } else if (score < 40) {
+                strengthBar.className = 'progress-bar bg-danger';
+                strengthText.textContent = 'Weak password';
+                strengthText.className = 'text-danger';
+            } else if (score < 80) {
+                strengthBar.className = 'progress-bar bg-warning';
+                strengthText.textContent = 'Medium strength';
+                strengthText.className = 'text-warning';
+            } else if (score < 100) {
+                strengthBar.className = 'progress-bar bg-info';
+                strengthText.textContent = 'Good password';
+                strengthText.className = 'text-info';
+            } else {
+                strengthBar.className = 'progress-bar bg-success';
+                strengthText.textContent = 'Strong password!';
+                strengthText.className = 'text-success';
+            }
             
             checkFormValidity();
         }
-    });
 
-    confirmInput.addEventListener('input', checkPasswordMatch);
-    newPasswordInput.addEventListener('input', checkPasswordMatch);
-    currentPasswordInput.addEventListener('input', checkFormValidity);
-    
-    nameInput.addEventListener('input', function() {
-        if (newPasswordInput.value) {
-            checkPasswordStrength(newPasswordInput.value);
-        }
-    });
-
-    // Form submission validation
-    form.addEventListener('submit', function(e) {
-        if (passwordChangeMode) {
-            // Validate current password is filled
-            if (!currentPasswordInput.value) {
-                e.preventDefault();
-                alert('Please enter your current password to change it.');
-                currentPasswordInput.focus();
-                return false;
+        function checkPasswordMatch() {
+            const password = newPasswordInput.value;
+            const confirm = confirmInput.value;
+            const matchDiv = document.getElementById('passwordMatch');
+            
+            if (confirm === '') {
+                matchDiv.innerHTML = '';
+                requirements.match = false;
+            } else if (password === confirm) {
+                matchDiv.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Passwords match</small>';
+                requirements.match = true;
+            } else {
+                matchDiv.innerHTML = '<small class="text-danger"><i class="bi bi-x-circle"></i> Passwords do not match</small>';
+                requirements.match = false;
             }
             
-            // Validate all password requirements
-            const allRequirementsMet = Object.values(requirements).every(req => req === true);
-            
-            if (!allRequirementsMet) {
-                e.preventDefault();
-                alert('Please ensure all password requirements are met.');
-                return false;
+            checkFormValidity();
+        }
+
+        function checkFormValidity() {
+            if (passwordChangeMode) {
+                // If changing password, all requirements must be met
+                const allRequirementsMet = Object.values(requirements).every(req => req === true);
+                const currentPasswordFilled = currentPasswordInput.value.length > 0;
+                submitBtn.disabled = !allRequirementsMet || !currentPasswordFilled;
+            } else {
+                // If not changing password, form is always valid
+                submitBtn.disabled = false;
             }
         }
+
+        // Event listeners
+        newPasswordInput.addEventListener('input', function() {
+            const hasPassword = this.value.length > 0;
+            
+            console.log('New password input detected:', hasPassword); // Debug log
+            
+            // Toggle password change mode
+            passwordChangeMode = hasPassword;
+            
+            if (hasPassword) {
+                // Show password strength and confirm field
+                console.log('Showing password requirements'); // Debug log
+                strengthContainer.style.display = 'block';
+                confirmContainer.style.display = 'block';
+                checkPasswordStrength(this.value);
+            } else {
+                // Hide password strength and confirm field
+                console.log('Hiding password requirements'); // Debug log
+                strengthContainer.style.display = 'none';
+                confirmContainer.style.display = 'none';
+                confirmInput.value = '';
+                
+                // Reset requirements
+                requirements = {
+                    length: false,
+                    uppercase: false,
+                    lowercase: false,
+                    number: false,
+                    special: false,
+                    common: false,
+                    match: false
+                };
+                
+                checkFormValidity();
+            }
+        });
+
+        confirmInput.addEventListener('input', checkPasswordMatch);
+        
+        // Also trigger password match check when new password changes
+        newPasswordInput.addEventListener('input', function() {
+            if (confirmInput.value.length > 0) {
+                checkPasswordMatch();
+            }
+        });
+        
+        currentPasswordInput.addEventListener('input', checkFormValidity);
+        
+        nameInput.addEventListener('input', function() {
+            if (newPasswordInput.value) {
+                checkPasswordStrength(newPasswordInput.value);
+            }
+        });
+
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            if (passwordChangeMode) {
+                // Validate current password is filled
+                if (!currentPasswordInput.value) {
+                    e.preventDefault();
+                    alert('Please enter your current password to change it.');
+                    currentPasswordInput.focus();
+                    return false;
+                }
+                
+                // Validate all password requirements
+                const allRequirementsMet = Object.values(requirements).every(req => req === true);
+                
+                if (!allRequirementsMet) {
+                    e.preventDefault();
+                    alert('Please ensure all password requirements are met.');
+                    return false;
+                }
+            }
+        });
+
+        console.log('Edit account password validation initialized'); // Debug log
     });
 </script>
 

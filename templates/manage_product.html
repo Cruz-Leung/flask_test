@@ -66,6 +66,67 @@
                             <small class="text-muted">Optional: Enter 0-100 for percentage discount</small>
                         </div>
 
+                        <!-- Taste Profile Section (Only for Beans) -->
+                        <div id="taste-profile-section" style="display: none;">
+                            <hr class="my-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-cup-hot me-2"></i>Taste Profile
+                                <small class="text-muted">(Beans Products Only)</small>
+                            </h5>
+                            <p class="text-muted small mb-3">Rate each characteristic from 1 (low) to 5 (high)</p>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="taste_sweetness" class="form-label">
+                                        <i class="bi bi-heart-fill text-danger me-1"></i>Sweetness
+                                    </label>
+                                    <select class="form-select" id="taste_sweetness" name="taste_sweetness">
+                                        <option value="">Not Set</option>
+                                        <option value="1">1 - Very Low</option>
+                                        <option value="2">2 - Low</option>
+                                        <option value="3">3 - Medium</option>
+                                        <option value="4">4 - High</option>
+                                        <option value="5">5 - Very High</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="taste_aroma" class="form-label">
+                                        <i class="bi bi-flower1 text-primary me-1"></i>Aroma
+                                    </label>
+                                    <select class="form-select" id="taste_aroma" name="taste_aroma">
+                                        <option value="">Not Set</option>
+                                        <option value="1">1 - Very Low</option>
+                                        <option value="2">2 - Low</option>
+                                        <option value="3">3 - Medium</option>
+                                        <option value="4">4 - High</option>
+                                        <option value="5">5 - Very High</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="taste_body" class="form-label">
+                                        <i class="bi bi-droplet-fill text-warning me-1"></i>Body
+                                    </label>
+                                    <select class="form-select" id="taste_body" name="taste_body">
+                                        <option value="">Not Set</option>
+                                        <option value="1">1 - Very Light</option>
+                                        <option value="2">2 - Light</option>
+                                        <option value="3">3 - Medium</option>
+                                        <option value="4">4 - Full</option>
+                                        <option value="5">5 - Very Full</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <small>These ratings will be displayed as a visual profile on the product card.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
                             <textarea class="form-control" id="description" name="description" rows="4" 
@@ -97,12 +158,12 @@
     const subcategoryOptions = {
         'machines': [
             { value: 'semi-auto', label: 'Semi-Automatic' },
-            { value: 'auto', label: 'Automatic' },
-            { value: 'manual', label: 'Manual' }
+            { value: 'fully-auto', label: 'Fully Automatic' },
+            { value: 'pod', label: 'Pod Machines' }
         ],
         'beans': [
             { value: 'coffee-beans', label: 'Coffee Beans' },
-            { value: 'ground-coffee', label: 'Ground Coffee/Capsules' },
+            { value: 'ground-coffee', label: 'Ground Coffee' },
             { value: 'capsules', label: 'Capsules' } 
         ],
         'accessories': [
@@ -115,6 +176,7 @@
     const categorySelect = document.getElementById('category');
     const subcategorySelect = document.getElementById('subcategory');
     const subcategoryHint = document.getElementById('subcategory-hint');
+    const tasteProfileSection = document.getElementById('taste-profile-section');
 
     // Function to update subcategory dropdown based on category
     function updateSubcategoryOptions() {
@@ -143,6 +205,17 @@
             subcategorySelect.disabled = true;
             subcategoryHint.textContent = 'Choose a category to see subcategories';
         }
+        
+        // Show/hide taste profile section for beans
+        if (selectedCategory === 'beans') {
+            tasteProfileSection.style.display = 'block';
+            // Scroll to taste profile section smoothly
+            setTimeout(() => {
+                tasteProfileSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        } else {
+            tasteProfileSection.style.display = 'none';
+        }
     }
 
     // Update subcategory options when category changes
@@ -151,6 +224,6 @@
     // Initialize subcategory dropdown on page load
     updateSubcategoryOptions();
 
-    console.log('Add product page loaded - subcategory system initialized');
+    console.log('Add product page loaded - subcategory and taste profile system initialized');
 </script>
 {% endblock %}

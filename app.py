@@ -147,9 +147,16 @@ def utility_processor():
         conn.close()
         return product['id'] if product else 1  # Fallback to ID 1 if not found
     
+    def get_cruzy_beans_id():  # ADD THIS FUNCTION
+        conn = get_db_connection()
+        product = conn.execute("SELECT id FROM products WHERE sku = 'B-CZY-001' LIMIT 1").fetchone()
+        conn.close()
+        return product['id'] if product else 1
+    
     return dict(
+        get_summer_blend_id=get_summer_blend_id,
         get_breville_id=get_breville_id,
-        get_summer_blend_id=get_summer_blend_id
+        get_cruzy_beans_id=get_cruzy_beans_id  # ADD THIS
     )
 
 
@@ -1225,30 +1232,54 @@ def membership():
 @app.route("/admin/product/add", methods=['GET', 'POST'])
 @admin_required
 def add_product():
+    """Add a new product"""
     if request.method == 'POST':
         sku = request.form.get('sku')
         name = request.form.get('name')
         category = request.form.get('category')
         subcategory = request.form.get('subcategory')
         price = request.form.get('price')
-        stock = request.form.get('stock')
         description = request.form.get('description')
+        stock = request.form.get('stock', 0)
         discount_percentage = request.form.get('discount_percentage', 0)
+        
+        # Get taste profile data (only for beans)
+        taste_sweetness = request.form.get('taste_sweetness') if category == 'beans' else None
+        taste_aroma = request.form.get('taste_aroma') if category == 'beans' else None
+        taste_body = request.form.get('taste_body') if category == 'beans' else None
+        
+        # Convert empty strings to None
+        taste_sweetness = int(taste_sweetness) if taste_sweetness and taste_sweetness != '' else None
+        taste_aroma = int(taste_aroma) if taste_aroma and taste_aroma != '' else None
+        taste_body = int(taste_body) if taste_body and taste_body != '' else None
 
         image = request.files.get('image')
         image_filename = None
-        if image and image.filename and allowed_file(image.filename):
-            ext = image.filename.rsplit('.', 1)[1].lower()
-            image_filename = f"{sku}.{ext}"
-            STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
-            image.save(STATIC_IMG_DIR / image_filename)
+        if image and image.filename:
+            if allowed_file(image.filename):
+                ext = image.filename.rsplit('.', 1)[1].lower()
+                image_filename = f"{sku}.{ext}"
+                STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
+                image.save(STATIC_IMG_DIR / image_filename)
+            else:
+                flash("Invalid image type. Allowed: jpg, png, webp, gif, avif", "danger")
+                return redirect(request.url)
 
         conn = get_db_connection()
+        
+        existing = conn.execute("SELECT id FROM products WHERE sku = ?", (sku,)).fetchone()
+        if existing:
+            flash(f"⚠️ A product with SKU '{sku}' already exists.", "warning")
+            conn.close()
+            return redirect(url_for('add_product'))
+
         try:
             conn.execute("""
-                INSERT INTO products (sku, name, category, subcategory, price, stock, description, image, discount_percentage)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (sku, name, category, subcategory, price, stock, description, image_filename, discount_percentage))
+                INSERT INTO products (sku, name, category, subcategory, price, description, stock, image, discount_percentage, 
+                                     taste_sweetness, taste_aroma, taste_body)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (sku, name, category, subcategory, price, description, stock, image_filename, discount_percentage,
+                  taste_sweetness, taste_aroma, taste_body))
             conn.commit()
 
             log_activity(
@@ -1256,20 +1287,18 @@ def add_product():
                 product_id=None,
                 product_sku=sku,
                 product_name=name,
-                details=f"Added {name} ({sku}) - Category: {category}/{subcategory}, Price: ${price}, Stock: {stock}"
+                details=f"Added {name} ({sku}) - Category: {category}, Price: ${price}, Stock: {stock}"
             )
 
-            flash("✅ New product added successfully!", "success")
+            flash(f"✅ Product '{name}' added successfully!", "success")
+            conn.close()
+            return redirect(url_for('edit_product'))
+        except sqlite3.Error as e:
+            flash(f"❌ Error adding product: {e}", "danger")
             conn.close()
             return redirect(url_for('add_product'))
-        except sqlite3.IntegrityError:
-            flash("⚠️ Product with this SKU already exists.", "warning")
-        except Exception as e:
-            flash(f"❌ Error adding product: {e}", "danger")
-        finally:
-            conn.close()
-    
-    return render_template('manage_product.html', action='add', year=datetime.now().year)
+
+    return render_template('manage_product.html', year=datetime.now().year)
 
 
 @app.route("/admin/product/edit", methods=['GET', 'POST'])
@@ -1295,6 +1324,16 @@ def edit_product():
         description = request.form.get('description')
         stock = request.form.get('stock')
         discount_percentage = request.form.get('discount_percentage', 0)
+        
+        # Get taste profile data (only for beans)
+        taste_sweetness = request.form.get('taste_sweetness') if category == 'beans' else None
+        taste_aroma = request.form.get('taste_aroma') if category == 'beans' else None
+        taste_body = request.form.get('taste_body') if category == 'beans' else None
+        
+        # Convert empty strings to None
+        taste_sweetness = int(taste_sweetness) if taste_sweetness and taste_sweetness != '' else None
+        taste_aroma = int(taste_aroma) if taste_aroma and taste_aroma != '' else None
+        taste_body = int(taste_body) if taste_body and taste_body != '' else None
 
         sku_changed = old_sku != new_sku and session.get('user_role') == 'manager'
 
@@ -1322,15 +1361,19 @@ def edit_product():
             if image_filename:
                 conn.execute("""
                     UPDATE products
-                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, image = ?, discount_percentage = ?
+                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, image = ?, discount_percentage = ?,
+                        taste_sweetness = ?, taste_aroma = ?, taste_body = ?
                     WHERE sku = ?
-                """, (new_sku, name, category, subcategory, price, description, stock, image_filename, discount_percentage, old_sku))
+                """, (new_sku, name, category, subcategory, price, description, stock, image_filename, discount_percentage,
+                      taste_sweetness, taste_aroma, taste_body, old_sku))
             else:
                 conn.execute("""
                     UPDATE products
-                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, discount_percentage = ?
+                    SET sku = ?, name = ?, category = ?, subcategory = ?, price = ?, description = ?, stock = ?, discount_percentage = ?,
+                        taste_sweetness = ?, taste_aroma = ?, taste_body = ?
                     WHERE sku = ?
-                """, (new_sku, name, category, subcategory, price, description, stock, discount_percentage, old_sku))
+                """, (new_sku, name, category, subcategory, price, description, stock, discount_percentage,
+                      taste_sweetness, taste_aroma, taste_body, old_sku))
             conn.commit()
 
             log_activity(

@@ -3,52 +3,52 @@
 {% block title %}Coffee Machines - Cruzy Coffee Co.{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<section class="py-5 text-center">
-    <div class="container">
-        <h1 class="display-4 fw-bold">Coffee Machines</h1>
-        <p class="lead text-muted">Find the perfect espresso machine for your home</p>
+<!-- Full-Width Hero Section with Tabs Overlay -->
+<section class="machines-hero-section-full">
+    <div class="machines-hero-overlay"></div>
+    <div class="machines-hero-text-overlay">
+        <div class="container">
+            <h1 class="display-3 fw-bold text-white mb-4">Coffee Machines</h1>
+            
+            <!-- Category Tabs - ON TOP OF IMAGE -->
+            <ul class="nav nav-pills nav-fill category-tabs-overlay" id="machineTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if category == 'semi-auto' %}active{% endif %}" 
+                            id="semi-auto-tab" 
+                            data-bs-toggle="pill" 
+                            data-bs-target="#semi-auto" 
+                            type="button" 
+                            role="tab">
+                        Semi-Automatic
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if category == 'fully-auto' %}active{% endif %}" 
+                            id="fully-auto-tab" 
+                            data-bs-toggle="pill" 
+                            data-bs-target="#fully-auto" 
+                            type="button" 
+                            role="tab">
+                        Fully Automatic
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if category == 'pod' %}active{% endif %}" 
+                            id="pod-tab" 
+                            data-bs-toggle="pill" 
+                            data-bs-target="#pod" 
+                            type="button" 
+                            role="tab">
+                        Pod Machines
+                    </button>
+                </li>
+            </ul>
+        </div>
     </div>
 </section>
 
-<!-- Category Tabs -->
-<section class="container mb-4">
-    <ul class="nav nav-pills nav-fill category-tabs" id="machineTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if category == 'semi-auto' %}active{% endif %}" 
-                    id="semi-auto-tab" 
-                    data-bs-toggle="pill" 
-                    data-bs-target="#semi-auto" 
-                    type="button" 
-                    role="tab">
-                Semi-Automatic
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if category == 'fully-auto' %}active{% endif %}" 
-                    id="fully-auto-tab" 
-                    data-bs-toggle="pill" 
-                    data-bs-target="#fully-auto" 
-                    type="button" 
-                    role="tab">
-                Fully Automatic
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if category == 'pod' %}active{% endif %}" 
-                    id="pod-tab" 
-                    data-bs-toggle="pill" 
-                    data-bs-target="#pod" 
-                    type="button" 
-                    role="tab">
-                Pod Machines
-            </button>
-        </li>
-    </ul>
-</section>
-
 <!-- Tab Content -->
-<section class="container pb-5">
+<section class="container pb-5 pt-4">
     <div class="tab-content" id="machineTabContent">
         
         <!-- Semi-Automatic Tab -->
