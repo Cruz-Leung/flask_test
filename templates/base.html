@@ -234,6 +234,9 @@
                                     <li><a class="dropdown-item" href="{{ url_for('manage_staff') }}">
                                         <i class="bi bi-people me-2"></i>Manage Staff
                                     </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('activity_log') }}">
+                                        <i class="bi bi-journal-text me-2"></i>Activity Log
+                                    </a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -330,56 +333,75 @@
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
     
 
-         <!-- Expanding Search Bar Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchContainer = document.getElementById('searchContainer');
-            const searchIconBtn = document.getElementById('searchIconBtn');
-            const searchForm = searchContainer.querySelector('.search-form-expanding');
-            const searchInput = document.getElementById('searchInputExpanding');
-            
-            // Create backdrop
-            const backdrop = document.createElement('div');
-            backdrop.className = 'search-backdrop';
-            document.body.appendChild(backdrop);
-            
-            // Toggle search bar
-            searchIconBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                searchContainer.classList.add('active');
-                searchForm.classList.add('active');
-                backdrop.classList.add('active');
-                
-                // Focus input after animation
-                setTimeout(() => {
-                    searchInput.focus();
-                }, 400);
-            });
-            
-            // Close search when clicking backdrop
-            backdrop.addEventListener('click', function() {
-                searchContainer.classList.remove('active');
-                searchForm.classList.remove('active');
-                backdrop.classList.remove('active');
-                searchInput.value = '';
-            });
-            
-            // Prevent closing when clicking inside search
-            searchContainer.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-            
-            // Close on Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && searchForm.classList.contains('active')) {
-                    searchContainer.classList.remove('active');
-                    searchForm.classList.remove('active');
-                    backdrop.classList.remove('active');
-                    searchInput.value = '';
-                }
-            });
-        });
-    </script>
+<!-- Expanding Search Bar Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchContainer = document.getElementById('searchContainer');
+    const searchIconBtn = document.getElementById('searchIconBtn');
+    const searchForm = searchContainer.querySelector('.search-form-expanding');
+    const searchInput = document.getElementById('searchInputExpanding');
+    const searchBtn = searchContainer.querySelector('.search-btn-expanding');
+    
+    // Create backdrop (but don't show it)
+    const backdrop = document.createElement('div');
+    backdrop.className = 'search-backdrop';
+    document.body.appendChild(backdrop);
+    
+    // Toggle search bar
+    searchIconBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        searchContainer.classList.add('active');
+        searchForm.classList.add('active');
+        // Don't activate backdrop
+        
+        // Focus input after animation
+        setTimeout(() => {
+            searchInput.focus();
+        }, 400);
+    });
+    
+    // Prevent form from closing when clicking search button
+    searchBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent event from bubbling up
+        // Form will submit naturally
+    });
+    
+    // Prevent closing when clicking inside search form
+    searchForm.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    // Close search when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchContainer.contains(e.target)) {
+            searchContainer.classList.remove('active');
+            searchForm.classList.remove('active');
+            backdrop.classList.remove('active');
+            searchInput.value = '';
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && searchForm.classList.contains('active')) {
+            searchContainer.classList.remove('active');
+            searchForm.classList.remove('active');
+            backdrop.classList.remove('active');
+            searchInput.value = '';
+        }
+    });
+    
+    // Handle form submission
+    searchForm.addEventListener('submit', function(e) {
+        // Let the form submit naturally, don't prevent it
+        // Just ensure the input has a value
+        if (!searchInput.value.trim()) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+});
+</script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

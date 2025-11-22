@@ -18,14 +18,12 @@
             <li class="nav-item">
                 <a class="nav-link {% if not subcategory or subcategory == 'brewing-equipment' %}active{% endif %}" 
                    href="{{ url_for('accessories', subcategory='brewing-equipment') }}">
-                    <i class="bi bi-cup-hot me-1"></i>
                     Brewing Equipment
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if subcategory == 'grinders' %}active{% endif %}" 
                    href="{{ url_for('accessories', subcategory='grinders') }}">
-                    <i class="bi bi-gear-fill me-1"></i>
                     Grinders
                 </a>
             </li>

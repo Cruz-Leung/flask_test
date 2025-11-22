@@ -14,32 +14,60 @@
                 No results found for "<strong>{{ query }}</strong>"
             {% endif %}
         </p>
+        
+        <!-- "Did you mean?" suggestions -->
+        {% if suggestions and suggestions|length > 0 %}
+        <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
+            <i class="bi bi-lightbulb me-2 fs-5"></i>
+            <div>
+                <strong>Did you mean:</strong>
+                {% for suggestion in suggestions %}
+                    <a href="{{ url_for('search', q=suggestion) }}" class="alert-link ms-1">
+                        {{ suggestion }}
+                    </a>{% if not loop.last %},{% endif %}
+                {% endfor %}
+                ?
+            </div>
+        </div>
+        {% endif %}
     </div>
 </section>
 
-<!-- Category Filter -->
-{% if products %}
-<section class="container py-4">
-    <div class="d-flex justify-content-center flex-wrap gap-2">
-        <a href="{{ url_for('search', q=query) }}" 
-           class="btn btn-sm {% if not category_filter %}btn-dark{% else %}btn-outline-dark{% endif %}">
-            All Categories
-        </a>
-        <a href="{{ url_for('search', q=query, category='machines') }}" 
-           class="btn btn-sm {% if category_filter == 'machines' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-            <i class="bi bi-cup-hot me-1"></i>Machines
-        </a>
-        <a href="{{ url_for('search', q=query, category='beans') }}" 
-           class="btn btn-sm {% if category_filter == 'beans' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-            <i class="bi bi-bag-fill me-1"></i>Beans
-        </a>
-        <a href="{{ url_for('search', q=query, category='accessories') }}" 
-           class="btn btn-sm {% if category_filter == 'accessories' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-            <i class="bi bi-tools me-1"></i>Accessories
-        </a>
+<!-- Category Filter Tabs - Compact Pills -->
+<section class="container mt-4 mb-4">
+    <!-- Compact Pill Tabs -->
+    <div class="d-flex justify-content-center">
+        <ul class="nav nav-pills nav-pills-compact" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a href="{{ url_for('search', q=query) }}" 
+                   class="nav-link {% if not category_filter %}active{% endif %}">
+                    All
+                </a>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+                <a href="{{ url_for('search', q=query, category='machines') }}" 
+                   class="nav-link {% if category_filter == 'machines' %}active{% endif %}">
+                    Machines
+                </a>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+                <a href="{{ url_for('search', q=query, category='beans') }}" 
+                   class="nav-link {% if category_filter == 'beans' %}active{% endif %}">
+                    Beans
+                </a>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+                <a href="{{ url_for('search', q=query, category='accessories') }}" 
+                   class="nav-link {% if category_filter == 'accessories' %}active{% endif %}">
+                    Accessories
+                </a>
+            </li>
+        </ul>
     </div>
 </section>
-{% endif %}
 
 <!-- Search Results Grid -->
 <section class="container pb-5">
@@ -116,7 +144,23 @@
     <div class="text-center py-5">
         <i class="bi bi-search display-1 text-muted mb-3"></i>
         <h3 class="mb-3">No products found</h3>
-        <p class="text-muted mb-4">Try searching with different keywords or browse our categories:</p>
+        
+        {% if category_filter %}
+            <p class="lead text-muted mb-4">
+                No results for "<strong>{{ query }}</strong>" in <strong class="text-capitalize">{{ category_filter }}</strong> category.
+            </p>
+            <p class="text-muted mb-4">
+                Try searching in a different category using the filter above, or <a href="{{ url_for('search', q=query) }}" class="text-decoration-none fw-bold">view all results for "{{ query }}"</a>.
+            </p>
+        {% else %}
+            <p class="lead text-muted mb-4">
+                We couldn't find any products matching "<strong>{{ query }}</strong>".
+            </p>
+            <p class="text-muted mb-4">
+                Try different keywords or browse our categories below.
+            </p>
+        {% endif %}
+        
         <div class="d-flex justify-content-center gap-3 flex-wrap">
             <a href="{{ url_for('machines') }}" class="btn btn-outline-dark">
                 <i class="bi bi-cup-hot me-2"></i>Coffee Machines

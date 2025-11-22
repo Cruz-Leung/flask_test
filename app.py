@@ -18,6 +18,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from pathlib import Path
 from functools import wraps
 from datetime import datetime
+import difflib  # Add this to your imports at the top
+
 
 
 app = Flask(__name__)
@@ -46,8 +48,8 @@ def allowed_file(filename):
 
 # Authentication helper functions
 def hash_password(password):
-    """Hash a password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash a password using pbkdf2 with salt (same as registration)"""
+    return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
 def get_user_role():
     """Get the current user's role from session"""
@@ -93,6 +95,28 @@ def manager_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def log_activity(action, product_id=None, product_sku=None, product_name=None, details=None):
+    """Log admin/manager activity"""
+    if session.get('user_role') not in ['admin', 'manager']:
+        return  # Only log admin/manager actions
+    
+    conn = get_db_connection()
+    conn.execute("""
+        INSERT INTO activity_log 
+        (user_id, user_name, user_role, action, product_id, product_sku, product_name, details)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session.get('user_id'),
+        session.get('user_name'),
+        session.get('user_role'),
+        action,
+        product_id,
+        product_sku,
+        product_name,
+        details
+    ))
+    conn.commit()
+    conn.close()
 
 # ===========================
 # CONTEXT PROCESSOR
@@ -479,20 +503,48 @@ def edit_account():
         city = request.form.get('city', '').strip()
         state = request.form.get('state', '').strip()
         postcode = request.form.get('postcode', '').strip()
+        
+        # Password change (optional)
+        current_password = request.form.get('current_password', '')
         new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
         
         try:
+            # If user wants to change password
             if new_password:
+                # Get current user data
+                user = conn.execute("SELECT * FROM customers WHERE id = ?", (session['user_id'],)).fetchone()
+                
+                # Verify current password if provided
+                if current_password:
+                    if not check_password_hash(user['password'], current_password):
+                        flash('Current password is incorrect.', 'danger')
+                        conn.close()
+                        return redirect(url_for('edit_account'))
+                
+                # Validate new password
                 if len(new_password) < 6:
                     flash('Password must be at least 6 characters.', 'danger')
+                    conn.close()
                     return redirect(url_for('edit_account'))
-                hashed_password = hash_password(new_password)
+                
+                # Check passwords match
+                if new_password != confirm_password:
+                    flash('New passwords do not match.', 'danger')
+                    conn.close()
+                    return redirect(url_for('edit_account'))
+                
+                # Hash new password using generate_password_hash (same as registration)
+                hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
+                
+                # Update with new password
                 conn.execute("""
                     UPDATE customers 
                     SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, password = ?
                     WHERE id = ?
                 """, (name, phone, address, city, state, postcode, hashed_password, session['user_id']))
             else:
+                # Update without changing password
                 conn.execute("""
                     UPDATE customers 
                     SET name = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?
@@ -520,75 +572,57 @@ def edit_account():
     return render_template('edit_account.html', user=user, year=datetime.now().year)
 
 
-@app.route("/profile/update", methods=["POST"])
+
+
+@app.route("/activity-log")
 @login_required
-def update_profile():
-    """Update user profile"""
-    user_id = session.get('user_id')
+def activity_log():
+    """View activity log - Manager only"""
+    if session.get('user_role') != 'manager':
+        flash("Access denied. Manager privileges required.", "danger")
+        return redirect(url_for('index'))
     
-    name = request.form.get('name')
-    email = request.form.get('email')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    postcode = request.form.get('postcode')
-    
-    # Password change (optional)
-    current_password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_new_password = request.form.get('confirm_new_password')
+    # Get filter parameters
+    filter_action = request.args.get('action', '')
+    filter_user = request.args.get('user', '')
+    search_query = request.args.get('search', '')
     
     conn = get_db_connection()
     
-    # If user wants to change password
-    if current_password and new_password:
-        user = conn.execute("SELECT password FROM customers WHERE id = ?", (user_id,)).fetchone()
-        
-        # Verify current password
-        if not check_password_hash(user['password'], current_password):
-            conn.close()
-            flash("Current password is incorrect.", "danger")
-            return redirect(url_for('profile'))
-        
-        if new_password != confirm_new_password:
-            conn.close()
-            flash("New passwords do not match.", "danger")
-            return redirect(url_for('profile'))
-        
-        if len(new_password) < 6:
-            conn.close()
-            flash("New password must be at least 6 characters long.", "danger")
-            return redirect(url_for('profile'))
-        
-        # Hash new password with salt
-        hashed_new_password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
-        
-        # Update with new password
-        conn.execute("""
-            UPDATE customers 
-            SET name = ?, email = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?, password = ?
-            WHERE id = ?
-        """, (name, email, phone, address, city, state, postcode, hashed_new_password, user_id))
-    else:
-        # Update without changing password
-        conn.execute("""
-            UPDATE customers 
-            SET name = ?, email = ?, phone = ?, address = ?, city = ?, state = ?, postcode = ?
-            WHERE id = ?
-        """, (name, email, phone, address, city, state, postcode, user_id))
+    # Build query
+    query = "SELECT * FROM activity_log WHERE 1=1"
+    params = []
     
-    conn.commit()
+    if filter_action:
+        query += " AND action = ?"
+        params.append(filter_action)
+    
+    if filter_user:
+        query += " AND user_name = ?"
+        params.append(filter_user)
+    
+    if search_query:
+        query += " AND (product_name LIKE ? OR product_sku LIKE ? OR details LIKE ?)"
+        params.extend([f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'])
+    
+    query += " ORDER BY timestamp DESC LIMIT 200"
+    
+    logs = conn.execute(query, params).fetchall()
+    
+    # Get unique users for filter
+    all_users = conn.execute("""
+        SELECT DISTINCT user_name FROM activity_log ORDER BY user_name
+    """).fetchall()
+    
     conn.close()
     
-    # Update session
-    session['user_name'] = name
-    session['user_email'] = email
-    
-    flash("Profile updated successfully!", "success")
-    return redirect(url_for('profile'))
-
-
+    return render_template('activity_log.html',
+                         logs=logs,
+                         all_users=all_users,
+                         filter_action=filter_action,
+                         filter_user=filter_user,
+                         search_query=search_query,
+                         year=datetime.now().year)
 # ===========================
 # CART ROUTES (UNIFIED)
 # ===========================
@@ -1124,6 +1158,15 @@ def add_product():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (sku, name, category, subcategory, price, stock, description, image_filename, discount_percentage))
             conn.commit()
+
+            log_activity(
+                action='PRODUCT_ADDED',
+                product_id=None,
+                product_sku=sku,
+                product_name=name,
+                details=f"Added {name} ({sku}) - Category: {category}/{subcategory}, Price: ${price}, Stock: {stock}"
+            )
+
             flash("✅ New product added successfully!", "success")
             conn.close()
             return redirect(url_for('add_product'))
@@ -1194,6 +1237,15 @@ def edit_product():
                     WHERE sku = ?
                 """, (new_sku, name, category, subcategory, price, description, stock, discount_percentage, old_sku))
             conn.commit()
+
+            log_activity(
+                action='PRODUCT_EDITED',
+                product_id=None,
+                product_sku=new_sku,
+                product_name=name,
+                details=f"Updated {name} ({new_sku})" + (f" - SKU changed from {old_sku}" if sku_changed else f" - Price: ${price}, Stock: {stock}")
+            )
+
             flash("✅ Product updated successfully.", "success")
             sku = new_sku
         except sqlite3.Error as e:
@@ -1241,10 +1293,19 @@ def delete_product(sku):
         if not product:
             flash("Product not found.", "danger")
             return redirect(url_for('edit_product'))
-        
+
         conn.execute("DELETE FROM products WHERE sku = ?", (sku,))
         conn.commit()
         
+                
+        log_activity(
+            action='PRODUCT_DELETED',
+            product_id=product['id'],
+            product_sku=product['sku'],
+            product_name=product['name'],
+            details=f"Deleted {product['name']} ({product['sku']}) - Category: {product['category']}, Stock: {product['stock']}"
+        )
+
         if product['image']:
             image_path = STATIC_IMG_DIR / product['image']
             if image_path.exists():
@@ -1717,52 +1778,255 @@ def coming_soon():
     """Coming soon page"""
     return render_template("coming_soon.html", year=datetime.now().year)
 
+# ===========================
+# SEARCH UTILITY FUNCTIONS
+# ===========================
+
+def calculate_similarity(s1, s2):
+    """Calculate similarity ratio between two strings (0-1)"""
+    return difflib.SequenceMatcher(None, s1.lower(), s2.lower()).ratio()
+
+def get_search_suggestions(query, all_terms):
+    """Get 'Did you mean?' suggestions for potential typos"""
+    suggestions = []
+    query_lower = query.lower().strip()
+    
+    # Filter out single characters and very short terms (less than 2 characters)
+    unique_terms = list(set([term for term in all_terms if term and len(term) > 2]))
+    
+    for term in unique_terms:
+        if not term:  # Skip empty terms
+            continue
+        term_lower = term.lower().strip()
+        
+        # Skip if exact match
+        if query_lower == term_lower:
+            continue
+        
+        # Skip single character terms
+        if len(term) <= 2:
+            continue
+        
+        # Calculate similarity
+        similarity = calculate_similarity(query_lower, term_lower)
+        
+        # Lower threshold for better typo detection (50% instead of 60%)
+        # But require minimum length similarity
+        if 0.5 <= similarity < 1.0 and len(term) >= len(query) - 2:
+            suggestions.append((term, similarity))
+        
+        # Also check if query is contained in term or vice versa
+        # e.g., "summar" in "summer"
+        # But only if both are reasonable length (more than 3 chars)
+        if len(query) > 3 and len(term) > 3:
+            if query_lower in term_lower or term_lower in query_lower:
+                if (term, similarity) not in suggestions:
+                    suggestions.append((term, 0.9))  # High similarity for partial matches
+    
+    # Sort by similarity and return top 3 unique suggestions
+    suggestions.sort(key=lambda x: x[1], reverse=True)
+    unique_suggestions = []
+    seen = set()
+    for s, _ in suggestions:
+        s_lower = s.lower()
+        if s_lower not in seen and len(s) > 2:  # Double-check no short terms
+            unique_suggestions.append(s)
+            seen.add(s_lower)
+        if len(unique_suggestions) >= 3:
+            break
+    
+    return unique_suggestions
+
+def expand_query_with_synonyms(query):
+    """Expand search query with common synonyms"""
+    synonyms = {
+        'espresso': ['coffee', 'espresso machine', 'barista'],
+        'coffee': ['espresso', 'brew', 'java', 'caffeine'],
+        'machine': ['maker', 'brewer', 'equipment'],
+        'beans': ['grounds', 'roast', 'coffee beans'],
+        'grinder': ['mill', 'burr grinder'],
+        'milk': ['frother', 'steamer', 'foam'],
+        'frother': ['milk frother', 'steamer', 'milk steamer', 'foam maker'],
+        'cup': ['mug', 'glass'],
+        'roast': ['beans', 'blend', 'coffee'],
+        'blend': ['mix', 'roast', 'beans'],
+        'dark': ['bold', 'strong', 'intense'],
+        'light': ['mild', 'smooth', 'medium'],
+        'summer': ['seasonal', 'limited'],
+        'summar': ['summer'],  # Common typo
+        'winter': ['seasonal', 'limited'],
+        'automatic': ['auto', 'electric'],
+        'manual': ['hand', 'lever'],
+        'brewville': ['breville'],  # Common typo
+        'expresso': ['espresso'],   # Common typo
+    }
+    
+    # Get all words from query
+    words = query.lower().split()
+    expanded_terms = set(words)
+    
+    # Add synonyms
+    for word in words:
+        if word in synonyms:
+            expanded_terms.update(synonyms[word])
+    
+    return list(expanded_terms)
+
 @app.route("/search")
 def search():
-    """Search products by keyword"""
+    """Advanced search with typo tolerance, synonyms, and suggestions"""
     query = request.args.get('q', '').strip()
-    category_filter = request.args.get('category', '')
+    category_filter = request.args.get('category', '').strip().lower()
     
     if not query:
-        flash("Please enter a search term.", "warning")
-        return redirect(url_for('index'))
+        return render_template('search_results.html', 
+                             products=[], 
+                             query='', 
+                             category_filter=category_filter,
+                             suggestions=[],
+                             year=datetime.now().year)
     
     conn = get_db_connection()
     
-    # Build the SQL query
-    sql = '''
-        SELECT * FROM products 
-        WHERE (
-            name LIKE ? OR 
-            sku LIKE ? OR 
-            description LIKE ? OR 
-            brand LIKE ? OR
-            category LIKE ? OR
-            subcategory LIKE ?
-        )
-    '''
+    # Normalize the search query
+    normalized_query = ' '.join(query.lower().split())
+    no_space_query = normalized_query.replace(' ', '')
     
-    search_term = f'%{query}%'
-    params = [search_term] * 6
+    # Expand query with synonyms for better matching
+    expanded_terms = expand_query_with_synonyms(normalized_query)
     
-    # Add category filter if specified
+    # Get all unique product names and brands for typo detection
+    all_products = conn.execute("SELECT DISTINCT name, brand FROM products").fetchall()
+    all_terms = []
+    for p in all_products:
+        if p['name']:
+            all_terms.append(p['name'])
+            # Only add individual words if they're meaningful (longer than 3 chars)
+            words = p['name'].split()
+            all_terms.extend([w for w in words if len(w) > 3])
+        if p['brand']:
+            all_terms.append(p['brand'])
+    
+    # ALWAYS get suggestions for potential typos (whether results found or not)
+    suggestions = get_search_suggestions(normalized_query, all_terms)
+    
+    # Build comprehensive search with typo tolerance and synonyms
     if category_filter:
-        sql += ' AND category = ?'
-        params.append(category_filter)
-    
-    sql += ' ORDER BY name'
+        # Create dynamic SQL with synonym matching
+        synonym_conditions = []
+        synonym_params = []
+        for term in expanded_terms:
+            synonym_conditions.append("LOWER(p.name) LIKE ?")
+            synonym_conditions.append("LOWER(p.description) LIKE ?")
+            synonym_conditions.append("LOWER(p.brand) LIKE ?")
+            synonym_params.extend([f'%{term}%', f'%{term}%', f'%{term}%'])
+        
+        synonym_sql = " OR ".join(synonym_conditions) if synonym_conditions else "1=0"
+        
+        sql = f"""
+            SELECT DISTINCT p.* FROM products p
+            WHERE p.category = ?
+            AND (
+                -- Exact match (case-insensitive)
+                LOWER(p.name) LIKE ? OR
+                LOWER(p.description) LIKE ? OR
+                LOWER(p.brand) LIKE ? OR
+                LOWER(p.subcategory) LIKE ? OR
+                
+                -- Space-insensitive match
+                REPLACE(LOWER(p.name), ' ', '') LIKE ? OR
+                REPLACE(LOWER(p.description), ' ', '') LIKE ? OR
+                REPLACE(LOWER(p.brand), ' ', '') LIKE ? OR
+                
+                -- Partial word match
+                LOWER(p.name) LIKE ? OR
+                LOWER(p.description) LIKE ? OR
+                LOWER(p.brand) LIKE ? OR
+                
+                -- Synonym matching
+                {synonym_sql}
+            )
+            ORDER BY
+                CASE
+                    WHEN LOWER(p.name) = ? THEN 1
+                    WHEN LOWER(p.brand) = ? THEN 2
+                    WHEN LOWER(p.name) LIKE ? THEN 3
+                    WHEN LOWER(p.brand) LIKE ? THEN 4
+                    ELSE 5
+                END,
+                p.name ASC
+        """
+        params = [
+            category_filter,
+            f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%',
+            f'%{no_space_query}%', f'%{no_space_query}%', f'%{no_space_query}%',
+            f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%',
+            *synonym_params,
+            normalized_query, normalized_query, f'{normalized_query}%', f'{normalized_query}%'
+        ]
+    else:
+        # Create dynamic SQL with synonym matching
+        synonym_conditions = []
+        synonym_params = []
+        for term in expanded_terms:
+            synonym_conditions.append("LOWER(p.name) LIKE ?")
+            synonym_conditions.append("LOWER(p.description) LIKE ?")
+            synonym_conditions.append("LOWER(p.brand) LIKE ?")
+            synonym_params.extend([f'%{term}%', f'%{term}%', f'%{term}%'])
+        
+        synonym_sql = " OR ".join(synonym_conditions) if synonym_conditions else "1=0"
+        
+        sql = f"""
+            SELECT DISTINCT p.* FROM products p
+            WHERE
+                -- Exact match (case-insensitive)
+                LOWER(p.name) LIKE ? OR
+                LOWER(p.description) LIKE ? OR
+                LOWER(p.brand) LIKE ? OR
+                LOWER(p.category) LIKE ? OR
+                LOWER(p.subcategory) LIKE ? OR
+                
+                -- Space-insensitive match
+                REPLACE(LOWER(p.name), ' ', '') LIKE ? OR
+                REPLACE(LOWER(p.description), ' ', '') LIKE ? OR
+                REPLACE(LOWER(p.brand), ' ', '') LIKE ? OR
+                
+                -- Partial word match
+                LOWER(p.name) LIKE ? OR
+                LOWER(p.description) LIKE ? OR
+                LOWER(p.brand) LIKE ? OR
+                LOWER(p.category) LIKE ? OR
+                
+                -- Synonym matching
+                {synonym_sql}
+            ORDER BY
+                CASE
+                    WHEN LOWER(p.name) = ? THEN 1
+                    WHEN LOWER(p.brand) = ? THEN 2
+                    WHEN LOWER(p.name) LIKE ? THEN 3
+                    WHEN LOWER(p.brand) LIKE ? THEN 4
+                    ELSE 5
+                END,
+                p.name ASC
+        """
+        params = [
+            f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%', 
+            f'%{normalized_query}%', f'%{normalized_query}%',
+            f'%{no_space_query}%', f'%{no_space_query}%', f'%{no_space_query}%',
+            f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%', f'%{normalized_query}%',
+            *synonym_params,
+            normalized_query, normalized_query, f'{normalized_query}%', f'{normalized_query}%'
+        ]
     
     products = conn.execute(sql, params).fetchall()
     conn.close()
     
-    return render_template(
-        'search_results.html',
-        query=query,
-        products=products,
-        category_filter=category_filter,
-        year=datetime.now().year
-    )
-
+    return render_template('search_results.html', 
+                         products=products, 
+                         query=query,
+                         category_filter=category_filter,
+                         suggestions=suggestions,
+                         year=datetime.now().year)
 
 if __name__ == "__main__":
     init_db()

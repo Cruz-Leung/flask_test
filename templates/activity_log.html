@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log - Cruzy Coffee Co.{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="bi bi-journal-text me-2"></i>Activity Log</h2>
+                    <p class="text-muted mb-0">Track all product changes by admins and managers</p>
+                </div>
+                <a href="{{ url_for('manage_staff') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Manager Tools
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="get" action="{{ url_for('activity_log') }}">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Search</label>
+                                <input type="text" 
+                                       name="search" 
+                                       class="form-control" 
+                                       placeholder="Product name, SKU..."
+                                       value="{{ search_query }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Action Type</label>
+                                <select name="action" class="form-select">
+                                    <option value="">All Actions</option>
+                                    <option value="PRODUCT_ADDED" {% if filter_action == 'PRODUCT_ADDED' %}selected{% endif %}>Added</option>
+                                    <option value="PRODUCT_EDITED" {% if filter_action == 'PRODUCT_EDITED' %}selected{% endif %}>Edited</option>
+                                    <option value="PRODUCT_DELETED" {% if filter_action == 'PRODUCT_DELETED' %}selected{% endif %}>Deleted</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">User</label>
+                                <select name="user" class="form-select">
+                                    <option value="">All Users</option>
+                                    {% for user in all_users %}
+                                    <option value="{{ user.user_name }}" {% if filter_user == user.user_name %}selected{% endif %}>
+                                        {{ user.user_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 me-2">
+                                    <i class="bi bi-funnel me-2"></i>Filter
+                                </button>
+                                <a href="{{ url_for('activity_log') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Activity Log Timeline -->
+            <div class="card shadow">
+                <div class="card-body p-0">
+                    {% if logs %}
+                    <div class="activity-log-container" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="timeline">
+                            {% for log in logs %}
+                            <div class="timeline-item {% if log.action == 'PRODUCT_ADDED' %}timeline-added{% elif log.action == 'PRODUCT_EDITED' %}timeline-edited{% else %}timeline-deleted{% endif %}">
+                                <div class="timeline-marker">
+                                    {% if log.action == 'PRODUCT_ADDED' %}
+                                    <i class="bi bi-plus-circle-fill text-success"></i>
+                                    {% elif log.action == 'PRODUCT_EDITED' %}
+                                    <i class="bi bi-pencil-square text-primary"></i>
+                                    {% else %}
+                                    <i class="bi bi-trash-fill text-danger"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if log.action == 'PRODUCT_ADDED' %}
+                                                <span class="badge bg-success me-2">Added</span>
+                                                {% elif log.action == 'PRODUCT_EDITED' %}
+                                                <span class="badge bg-primary me-2">Edited</span>
+                                                {% else %}
+                                                <span class="badge bg-danger me-2">Deleted</span>
+                                                {% endif %}
+                                                <strong>{{ log.product_name }}</strong>
+                                                {% if log.product_sku %}
+                                                <code class="ms-2 small">{{ log.product_sku }}</code>
+                                                {% endif %}
+                                            </h6>
+                                            <p class="text-muted small mb-1">
+                                                <i class="bi bi-person-circle me-1"></i>
+                                                {{ log.user_name }}
+                                                <span class="badge bg-secondary ms-1">{{ log.user_role }}</span>
+                                            </p>
+                                            <p class="mb-0 small">{{ log.details }}</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block mb-2">
+                                                <i class="bi bi-clock me-1"></i>
+                                                {{ log.timestamp }}
+                                            </small>
+                                            {% if log.action != 'PRODUCT_DELETED' and log.product_sku %}
+                                            <a href="{{ url_for('edit_product', sku=log.product_sku) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye me-1"></i>View Product
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="p-3 bg-light border-top">
+                        <small class="text-muted">
+                            Showing <strong>{{ logs|length }}</strong> recent activities
+                        </small>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-journal-x display-1 text-muted"></i>
+                        <p class="lead text-muted mt-3">No activity logs found</p>
+                        <p class="text-muted">Start adding or editing products to see activity here</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Activity Log Timeline Styles */
+.activity-log-container {
+    padding: 1.5rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 3rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1.25rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2.5rem;
+    top: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1;
+}
+
+.timeline-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.timeline-added .timeline-content {
+    border-left: 4px solid #28a745;
+}
+
+.timeline-edited .timeline-content {
+    border-left: 4px solid #007bff;
+}
+
+.timeline-deleted .timeline-content {
+    border-left: 4px solid #dc3545;
+}
+
+/* Badge Styling */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Code styling */
+code {
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+/* Filter card */
+.card {
+    border: none;
+}
+
+/* Scrollbar styling */
+.activity-log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.activity-log-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.activity-log-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.activity-log-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .timeline {
+        padding-left: 2.5rem;
+    }
+    
+    .timeline::before {
+        left: 1rem;
+    }
+    
+    .timeline-marker {
+        left: -2rem;
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+    }
+    
+    .timeline-content {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
