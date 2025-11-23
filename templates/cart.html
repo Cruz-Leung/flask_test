@@ -188,21 +188,17 @@ function removeFromCart(productId) {
     }
 }
 
-function updateQuantity(productId) {
-    const input = document.querySelector(`input[data-product-id="${productId}"]`);
-    const quantity = parseInt(input.value);
-    
-    if (quantity < 1) {
+function updateCartQuantity(productId, newQuantity) {
+    if (newQuantity < 1) {
         removeFromCart(productId);
         return;
     }
-    
     fetch(`/cart/update/${productId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ quantity: quantity })
+        body: JSON.stringify({ quantity: newQuantity })
     })
     .then(response => response.json())
     .then(data => {
