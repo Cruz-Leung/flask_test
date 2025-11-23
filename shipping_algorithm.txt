@@ -1,3 +1,5 @@
+// Shipping algorithm that is implemented in Cruzy Coffee
+
 FREE_SHIPPING_THRESHOLD = $80
 
 IF subtotal >= $80:

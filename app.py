@@ -2405,6 +2405,5 @@ if __name__ == "__main__":
     init_orders_db()
     init_reports_db() 
     add_discount_column()
-    set_product_discount()
     add_beans_subcategories()
     app.run(debug=True)

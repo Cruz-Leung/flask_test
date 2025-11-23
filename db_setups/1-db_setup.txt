@@ -1,0 +1,2 @@
+// Folder is designed to store migration and previously setup database python files for backup and storage purposes
+// They have no affect the the current database and should not be utilize to update into the database.

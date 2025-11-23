@@ -1,0 +1,17 @@
+// requirements.txt is used to list the Python packages required for the Flask application to run properly.
+// Versions are specified ensuring compatibility and stability of the application environment. 
+// Specific version is not required but reccomended
+
+Flask==2.3.2
+
+// Main dependencies for this Flask project.
+// Flask will automatically install Werkzeug, itsdangerous, Jinja2, and MarkupSafe as dependencies.
+// They are listed here for clarity and reproducibility.
+
+Werkzeug==2.3.6
+
+itsdangerous==2.1.2
+
+Jinja2==3.1.2
+
+MarkupSafe==2.1.3
