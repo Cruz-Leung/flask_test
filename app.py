@@ -2089,15 +2089,15 @@ def add_beans_subcategories():
 
 @app.errorhandler(403)
 def forbidden(e):
-    return render_template('error.html', error_code=403, error_message="Access Denied", year=datetime.now().year), 403
+    return render_template('errors/403.html', error_code=403, error_message="Access Denied", year=datetime.now().year), 403
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('error.html', error_code=404, error_message="Page Not Found", year=datetime.now().year), 404
+    return render_template('errors/404.html', error_code=404, error_message="Page Not Found", year=datetime.now().year), 404
 
 @app.errorhandler(500)
 def internal_error(e):
-    return render_template('error.html', error_code=500, error_message="Internal Server Error", year=datetime.now().year), 500
+    return render_template('errors/500.html', error_code=500, error_message="Internal Server Error", year=datetime.now().year), 500
 
 
 @app.route("/cart/items")

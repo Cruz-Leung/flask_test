@@ -1,0 +1,13 @@
+// Below is login information for all 3 roles in the website4 hierachy
+
+Manager
+email:cruzleung@gmail.com
+pw:Fongisthebest09#
+
+Admin
+email:cruzczuchry@gmail.com
+pw:Bestisthefong09#
+
+Customer
+email:customer@gmail.com
+pw:Thefongisthebest09#
