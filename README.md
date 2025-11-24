@@ -96,11 +96,14 @@ flask_test/
 
 3. **Run the Flask server:**
    ```
-   python app.py
+   python3 app.py (mac)
+   ```
+   ```
+   python app.py (windows)
    ```
 
-4. **Access the site:**
-   - Open your browser and go to "http://127.0.0.1:5000"
+5. **Access the site:**
+   - Open your browser and go to http://127.0.0.1:5000
 
 ---
 
